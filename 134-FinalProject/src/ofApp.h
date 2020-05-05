@@ -6,6 +6,8 @@
 #include "ray.h"
 #include "KdTree.h"
 #include "ofxGui.h"
+#include "ParticleSystem.h"
+#include "ParticleEmitter.h"
 
 class ofApp : public ofBaseApp{
 
@@ -70,4 +72,14 @@ class ofApp : public ofBaseApp{
         bool printOnce = true;
         TreeNode nodeSelected;
         Box selectedBox;
+    
+        // Midterm Code
+        Particle *lunarModel;
+        ParticleSystem *lunarModelSys;
+        ParticleEmitter *thrustEmitter;
+        ThrusterForce *tForce;
+        float lmAngle;
+        bool rotateCW = false;
+        bool rotateCCW = false;
+        glm::vec3 headingVector;
 };

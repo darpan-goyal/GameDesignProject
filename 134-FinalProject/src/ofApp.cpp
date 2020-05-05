@@ -40,7 +40,9 @@ void ofApp::setup(){
 	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
+    
 //	ofSetWindowShape(1024, 768);
+    
 	cam.setDistance(10);
 	cam.setNearClip(.1);
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
@@ -68,17 +70,73 @@ void ofApp::setup(){
 	// create KdTree for terrain
 	//
     float timeBefore = ofGetElapsedTimef();
-	kdtree.create(terrain.getMesh(0), 40);
+	kdtree.create(terrain.getMesh(0), 10);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     gui.setup();
-    gui.add(drawLevel.setup("Draw Level", 1, 1, 40));
+    gui.add(drawLevel.setup("Draw Level", 1, 1, 10));
+    
+    // Midterm Code
+    if (lander.loadModel("geo/lander.obj")) {
+        lander.setScaleNormalization(false);
+        lander.setScale(.5, .5, .5);
+        //    lander.setRotation(0, -180, 1, 0, 0);
+        lander.setPosition(0, 0, 0);
+
+        bLanderLoaded = true;
+    }
+    else {
+        cout << "Error: Can't load model" << "geo/lander.obj" << endl;
+        ofExit(0);
+    }
+    
+    lmAngle = 0;
+    headingVector = glm::vec3(0, 0, 0);
+    
+    // setup LEM
+    //
+    lunarModel = new Particle();
+    lunarModelSys = new ParticleSystem();
+    
+    lunarModel->position = glm::vec3(0, 0, 0);
+    lunarModel->radius = 0.25;
+    lunarModel->lifespan = -1;
+    lunarModelSys->add(*lunarModel);
+    tForce = new ThrusterForce(glm::vec3(0, 0, 0));
+    tForce->applied = true;
+    lunarModelSys->addForce(tForce);
+    lunarModelSys->addForce(new TurbulenceForce(glm::vec3(-0.3, -0.3, -0.3), glm::vec3(0.3, 0.3, 0.3)));
+    
+    thrustEmitter = new ParticleEmitter();
+    thrustEmitter->type = DiscEmitter;
+    thrustEmitter->velocity = glm::vec3(0, -3, 0);
+    thrustEmitter->rate = 50;
+    thrustEmitter->randomLife = true;
+    thrustEmitter->lifeMinMax = ofVec3f(0.15, 0.45);
+    thrustEmitter->radius = 0.18;
+    thrustEmitter->particleRadius = 0.01;
+    thrustEmitter->groupSize = 100;
 }
 
 //--------------------------------------------------------------
 // incrementally update scene (animation)
 //
 void ofApp::update() {
+    // Midterm Code
+    lunarModelSys->update();
+    lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
+    
+    thrustEmitter->update();
+    thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
+    
+    if(rotateCW)
+        lmAngle = lmAngle - 0.75;
+    if(rotateCCW)
+        lmAngle = lmAngle + 0.75;
+    if(rotateCW || rotateCCW)
+    {
+        lander.setRotation(0, lmAngle, 0, 1, 0);
+    }
 	
 }
 //--------------------------------------------------------------
@@ -165,9 +223,23 @@ void ofApp::draw(){
     }
      */
 
+    if(thrustEmitter->started)
+        thrustEmitter->draw();
+    
 	theCam->end();
     ofDisableDepthTest();
     gui.draw();
+    
+    // Midterm Code
+    string str;
+    str += "Frame Rate: " + std::to_string(ofGetFrameRate());
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+
+    string str2;
+    str2 += "Altitide (AGL): " + std::to_string(lander.getPosition().y);
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString(str2, 5, 15);
 }
 
 // 
@@ -216,7 +288,7 @@ void ofApp::keyPressed(int key) {
 	case 'r':
 		cam.reset();
 		break;
-	case 's':
+	case 'p':
 		savePicture();
 		break;
 	case 't':
@@ -229,9 +301,25 @@ void ofApp::keyPressed(int key) {
 		break;
 	case 'V':
 		break;
-	case 'w':
+	case 'm':
 		toggleWireframeMode();
 		break;
+    case 'd':     // rotate spacecraft clockwise (about Y (UP) axis)
+        rotateCW = true;
+        break;
+    case 'a':     // rotate spacecraft counter-clockwise (about Y (UP) axis)
+        rotateCCW = true;
+        break;
+    case 'w':     // spacecraft thrust UP
+        tForce->applied = false;
+        thrustEmitter->start();
+        tForce->set(glm::vec3(0, 0.5, 0));
+        break;
+    case 's':     // spacefraft thrust DOWN
+        tForce->applied = false;
+        thrustEmitter->start();
+        tForce->set(glm::vec3(0, -0.5, 0));
+        break;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
 		bAltKeyDown = true;
@@ -243,6 +331,30 @@ void ofApp::keyPressed(int key) {
 		break;
 	case OF_KEY_DEL:
 		break;
+    case OF_KEY_UP:    // move forward
+        headingVector = glm::vec3(0, 0, -1);
+        headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
+        tForce->set(headingVector);
+        tForce->applied = false;
+        break;
+    case OF_KEY_DOWN:   // move backward
+        headingVector = glm::vec3(0, 0, 1);
+        headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
+        tForce->set(headingVector);
+        tForce->applied = false;
+        break;
+    case OF_KEY_LEFT:   // move left
+        headingVector = glm::vec3(-1, 0, 0);
+        headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
+        tForce->set(headingVector);
+        tForce->applied = false;
+        break;
+    case OF_KEY_RIGHT:   // move right
+        headingVector = glm::vec3(1, 0, 0);
+        headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
+        tForce->set(headingVector);
+        tForce->applied = false;
+        break;
 	case OF_KEY_F1:
 		theCam = &cam;
 		break;
@@ -279,6 +391,32 @@ void ofApp::keyReleased(int key) {
 		break;
 	case OF_KEY_SHIFT:
 		break;
+    case 'w':
+        tForce->applied = true;
+        thrustEmitter->stop();
+        break;
+    case 's':
+        tForce->applied = true;
+        thrustEmitter->stop();
+        break;
+    case 'd':
+        rotateCW = false;
+        break;
+    case 'a':
+        rotateCCW = false;
+        break;
+    case OF_KEY_UP:    // move forward
+        tForce->applied = true;
+        break;
+    case OF_KEY_DOWN:   // move backward
+        tForce->applied = true;
+        break;
+    case OF_KEY_LEFT:   // move left
+        tForce->applied = true;
+        break;
+    case OF_KEY_RIGHT:   // move right
+        tForce->applied = true;
+        break;
 	default:
 		break;
 
@@ -304,7 +442,7 @@ void ofApp::mousePressed(int x, int y, int button) {
 
 	glm::vec3 p =  theCam->screenToWorld(glm::vec3(mouseX, mouseY, 0));
 	glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
-    /*
+    
 	// compute bounds
 	//
 	glm::vec3 min = lander.getSceneMin() + lander.getPosition();
@@ -324,7 +462,6 @@ void ofApp::mousePressed(int x, int y, int button) {
 
 	//  implement you code here to select the rover
 	//  if Selected, draw box in a different color
-     */
     
     TreeNode localNode;
     
