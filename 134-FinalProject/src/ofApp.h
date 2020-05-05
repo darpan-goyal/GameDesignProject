@@ -56,11 +56,14 @@ class ofApp : public ofBaseApp{
 		bool bLanderLoaded = false;
 		bool bTerrainSelected;
 		bool bLanderSelected = false;
+        bool bInDrag = false;
+        glm::vec3 getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm);
 	
 		ofVec3f selectedPoint;
 		ofVec3f intersectPoint;
 		
 		glm::vec3 mouseDownPos;
+        glm::vec3 mouseLastPos;
 
 
 		const float selectionRange = 4.0;

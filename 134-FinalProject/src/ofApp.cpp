@@ -440,31 +440,33 @@ void ofApp::mousePressed(int x, int y, int button) {
 	//
 	if (cam.getMouseInputEnabled()) return;
 
-	glm::vec3 p =  theCam->screenToWorld(glm::vec3(mouseX, mouseY, 0));
-	glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
-    
-	// compute bounds
-	//
-	glm::vec3 min = lander.getSceneMin() + lander.getPosition();
-	glm::vec3 max = lander.getSceneMax() + lander.getPosition();
-	Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+	// if rover is loaded, test for selection
+    //
+    if (bLanderLoaded) {
+        glm::vec3 origin = cam.getPosition();
+        glm::vec3 mouseWorld = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
+        glm::vec3 mouseDir = glm::normalize(mouseWorld - origin);
 
-	// test intersection with ray
-	//
-//	bool intersect(const Ray &, float t0, float t1) const;
+        ofVec3f min = lander.getSceneMin() + lander.getPosition();
+        ofVec3f max = lander.getSceneMax() + lander.getPosition();
 
-	if (bounds.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), 0, 1000)) {
-		bLanderSelected = true;
-	}
-	else {
-		bLanderSelected = false;
-	}
-
-	//  implement you code here to select the rover
-	//  if Selected, draw box in a different color
-    
+        Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+        bool hit = bounds.intersect(Ray(Vector3(origin.x, origin.y, origin.z), Vector3(mouseDir.x, mouseDir.y, mouseDir.z)), 0, 10000);
+        if (hit) {
+            bLanderSelected = true;
+            mouseDownPos = getMousePointOnPlane(lander.getPosition(), cam.getZAxis());
+            mouseLastPos = mouseDownPos;
+            bInDrag = true;
+        }
+        else {
+            bLanderSelected = false;
+        }
+    }
+    /*
     TreeNode localNode;
     
+    glm::vec3 p = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
+    glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
     float timeBefore = ofGetElapsedTimef();
     float timeAfter;
     
@@ -478,6 +480,7 @@ void ofApp::mousePressed(int x, int y, int button) {
     }
     else
         cout << "The surface wasn't clicked on." << endl;
+     */
 }
 
 
@@ -522,14 +525,54 @@ Box ofApp::meshBounds(const ofMesh & mesh) {
 //--------------------------------------------------------------
 void ofApp::mouseDragged(int x, int y, int button) {
 
-	// 
-	//  implement your code here to drag the lander around
+	// if moving camera, don't allow mouse interaction
+    //
+    if (cam.getMouseInputEnabled()) return;
 
+    if (bInDrag) {
+
+        glm::vec3 landerPos = lander.getPosition();
+
+        glm::vec3 mousePos = getMousePointOnPlane(landerPos, cam.getZAxis());
+        glm::vec3 delta = mousePos - mouseLastPos;
+    
+        landerPos += delta;
+        lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
+        mouseLastPos = mousePos;
+    }
+
+}
+
+//  intersect the mouse ray with the plane normal to the camera
+//  return intersection point.   (package code above into function)
+//
+glm::vec3 ofApp::getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm) {
+    // Setup our rays
+    //
+    glm::vec3 origin = cam.getPosition();
+    glm::vec3 camAxis = cam.getZAxis();
+    glm::vec3 mouseWorld = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
+    glm::vec3 mouseDir = glm::normalize(mouseWorld - origin);
+    float distance;
+
+    bool hit = glm::intersectRayPlane(origin, mouseDir, planePt, planeNorm, distance);
+
+    if (hit) {
+        // find the point of intersection on the plane using the distance
+        // We use the parameteric line or vector representation of a line to compute
+        //
+        // p' = p + s * dir;
+        //
+        glm::vec3 intersectPoint = origin + distance * mouseDir;
+
+        return intersectPoint;
+    }
+    else return glm::vec3(0, 0, 0);
 }
 
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button) {
-	bLanderSelected = false;
+    bInDrag = false;
 }
 
 
