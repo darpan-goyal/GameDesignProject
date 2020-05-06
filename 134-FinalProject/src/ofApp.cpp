@@ -537,7 +537,8 @@ void ofApp::mouseDragged(int x, int y, int button) {
         glm::vec3 delta = mousePos - mouseLastPos;
     
         landerPos += delta;
-        lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
+        lunarModelSys->particles[0].position = landerPos;
+        //lander.setPosition(landerPos.x, landerPos.y, landerPos.z);
         mouseLastPos = mousePos;
     }
 
@@ -573,6 +574,7 @@ glm::vec3 ofApp::getMousePointOnPlane(glm::vec3 planePt, glm::vec3 planeNorm) {
 //--------------------------------------------------------------
 void ofApp::mouseReleased(int x, int y, int button) {
     bInDrag = false;
+    bLanderSelected = false;
 }
 
 
