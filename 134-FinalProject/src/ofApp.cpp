@@ -62,8 +62,8 @@ void ofApp::setup(){
     // Midterm Code
     if (lander.loadModel("geo/lander.obj")) {
         lander.setScaleNormalization(false);
-        lander.setScale(.5, .5, .5);
-        //    lander.setRotation(0, -180, 1, 0, 0);
+        //lander.setScale(.5, .5, .5);
+        //lander.setRotation(0, -180, 1, 0, 0);
         lander.setPosition(0, 0, 0);
 
         bLanderLoaded = true;
