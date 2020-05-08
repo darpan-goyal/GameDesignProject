@@ -5,6 +5,7 @@
 #include "box.h"
 #include "ray.h"
 #include "KdTree.h"
+#include "Octree.h"
 #include "ofxGui.h"
 #include "ParticleSystem.h"
 #include "ParticleEmitter.h"
@@ -71,6 +72,7 @@ class ofApp : public ofBaseApp{
 		const float selectionRange = 4.0;
 
 		KdTree kdtree;
+        Octree octree;
     
         ofxPanel gui;
         ofxFloatSlider drawLevel;

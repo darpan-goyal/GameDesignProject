@@ -53,6 +53,7 @@ void ofApp::setup(){
 	//
     float timeBefore = ofGetElapsedTimef();
 	kdtree.create(terrain.getMesh(0), 40);
+    //octree.create(terrain.getMesh(0), 20);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
