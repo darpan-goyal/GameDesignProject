@@ -115,13 +115,49 @@ void Octree::subDivideBox8(const Box &box, vector<Box> & boxList) {
 void Octree::create(const ofMesh & geo, int numLevels) {
 	// initialize octree structure
 	//
-    
-	
+    mesh = geo;
+    int level = 0;
+
+    root.box = meshBounds(mesh);
+    for (int i = 0; i < mesh.getNumVertices(); i++) {
+        root.points.push_back(i);
+    }
+    level++;
+
+    subdivide(mesh, root, numLevels, level);
 
 }
 
 void Octree::subdivide(const ofMesh & mesh, TreeNode & node, int numLevels, int level) {
-
+    if(level >= numLevels) return;
+       
+       if(node.points.size() == 1) return;
+       
+       vector<Box> childBoxes;
+       subDivideBox(node.box, childBoxes, level);
+       //subDivideBoxByPoints(node.points, node.box, mesh, childBoxes, level);
+       
+       TreeNode childOne;
+       TreeNode childTwo;
+       
+       childOne.box = childBoxes[0];
+       childTwo.box = childBoxes[1];
+       
+       int numPointsB1 = getMeshPointsInBox(mesh, node.points, childOne.box, childOne.points);
+       int numPointsB2 = getMeshPointsInBox(mesh, node.points, childTwo.box, childTwo.points);
+       
+       if(numPointsB1 > 0)
+           node.children.push_back(childOne);
+       if(numPointsB2 > 0)
+           node.children.push_back(childTwo);
+           
+       if(node.children.size() > 0) {
+           for(int i = 0; i < node.children.size(); i++) {
+               if(node.children[i].points.size() > 1)
+                   subdivide(mesh, node.children[i], numLevels, level + 1);
+           }
+       }
+       else return;
 }
 
 bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn) {
