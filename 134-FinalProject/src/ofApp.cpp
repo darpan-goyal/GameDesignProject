@@ -52,14 +52,15 @@ void ofApp::setup(){
 	// create KdTree for terrain
 	//
     float timeBefore = ofGetElapsedTimef();
-	kdtree.create(terrain.getMesh(0), 10);
+	kdtree.create(terrain.getMesh(0), 40);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
-    gui.add(drawLevel.setup("Draw Level", 1, 1, 10));
+    gui.add(drawLevel.setup("Draw Level", 1, 1, 40));
     
     // Midterm Code
+    /*
     if (lander.loadModel("geo/lander.obj")) {
         lander.setScaleNormalization(false);
         //lander.setScale(.5, .5, .5);
@@ -72,6 +73,7 @@ void ofApp::setup(){
         cout << "Error: Can't load model" << "geo/lander.obj" << endl;
         ofExit(0);
     }
+     */
     
     lmAngle = 0;
     headingVector = glm::vec3(0, 0, 0);
@@ -111,6 +113,22 @@ void ofApp::update() {
     
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
+    
+    // Altitude Detection
+    if(bLanderLoaded) {
+        if(ofGetElapsedTimeMillis() - intersectTime > 2000.0) {
+            intersectTime = ofGetElapsedTimeMillis();
+            Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
+            Vector3 direction = Vector3(0, -1, 0);
+            Ray altDetect = Ray(origin, direction);
+            TreeNode localNode;
+        
+            if(kdtree.intersect(altDetect, kdtree.root, localNode)) {
+                landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
+            }
+        }
+    }
+        
     
     if(rotateCW)
         lmAngle = lmAngle - 0.75;
@@ -218,7 +236,8 @@ void ofApp::draw(){
     ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
 
     string str2;
-    str2 += "Altitide (AGL): " + std::to_string(lander.getPosition().y);
+    //str2 += "Altitide (AGL): " + std::to_string(lander.getPosition().y);
+    str2 += "Altitide (AGL): " + std::to_string(landerAlt);
     ofSetColor(ofColor::white);
     ofDrawBitmapString(str2, 5, 15);
 }

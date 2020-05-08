@@ -87,4 +87,8 @@ class ofApp : public ofBaseApp{
         bool rotateCW = false;
         bool rotateCCW = false;
         glm::vec3 headingVector;
+    
+        // Altitude detection
+        float landerAlt = 0.0;
+        float intersectTime = 0.0;
 };
