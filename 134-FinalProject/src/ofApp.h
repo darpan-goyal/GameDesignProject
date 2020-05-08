@@ -46,6 +46,7 @@ class ofApp : public ofBaseApp{
 		ofLight light;
 		Box boundingBox;
 		Box landerBounds;
+        ofImage backgroundImage;
 	
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -53,6 +54,7 @@ class ofApp : public ofBaseApp{
 		bool bDisplayPoints;
 		bool bPointSelected;
 		
+        bool bBackgroundLoaded = false;
 		bool bLanderLoaded = false;
 		bool bTerrainSelected;
 		bool bLanderSelected = false;

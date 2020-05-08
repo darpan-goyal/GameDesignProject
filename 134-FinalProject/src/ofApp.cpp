@@ -29,6 +29,9 @@ void ofApp::setup(){
     ofSetVerticalSync(true);
 	ofEnableSmoothing();
 	ofEnableDepthTest();
+    
+    // Loading a background image
+    bBackgroundLoaded = backgroundImage.load("images/starfield-purple1.jpg");
 
 	top.setPosition(0, 25, 0);
 	top.lookAt(glm::vec3(0, 0, 0));
@@ -121,9 +124,17 @@ void ofApp::update() {
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
-    ofEnableDepthTest();
-
-	ofBackground(ofColor::black);
+    // Drawing background image
+    //
+    if (bBackgroundLoaded) {
+        ofPushMatrix();
+        ofDisableDepthTest();
+        ofSetColor(50, 50, 50);
+        ofScale(2, 2);
+        backgroundImage.draw(-200, -100);
+        ofEnableDepthTest();
+        ofPopMatrix();
+    }
     
 	theCam->begin();
 
