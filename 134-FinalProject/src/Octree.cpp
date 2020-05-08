@@ -113,7 +113,7 @@ void Octree::subDivideBox8(const Box &box, vector<Box> & boxList) {
 }
 
 void Octree::create(const ofMesh & geo, int numLevels) {
-	mesh = geo;
+    mesh = geo;
     int level = 0;
 
     root.box = meshBounds(mesh);
