@@ -1,26 +1,4 @@
-
-//--------------------------------------------------------------
-//
-//  CS134 - Game Development
-//
-//  3D Model Drag and Drop and Ray Tracing Selection - startup scene
-// 
-//  This is an openFrameworks 3D scene that includes an EasyCam
-//  and example 3D geometry which I have modelled in Houdini that
-//  represents lunar terrain.
-//
-//  You will use this source file (and include file) as a starting point
-// 
-//  Please do not modify any of the keymappings.  I would like 
-//  the input interface to be the same for each student's 
-//  work.  Please also add your name/date below.
-//
-//  Please document/comment all of your work !
-//  Have Fun !!
-//
-//  Kevin Smith   10-20-19
-//
-//  Student Name:   < Your Name goes Here >
+//  Student Name:   Sivam Agarwalla, Darpran Goyal
 //  Date: <date of last version>
 
 
@@ -46,8 +24,9 @@ void ofApp::setup(){
 	cam.setDistance(10);
 	cam.setNearClip(.1);
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
-	ofSetVerticalSync(true);
 	cam.disableMouseInput();
+    
+    ofSetVerticalSync(true);
 	ofEnableSmoothing();
 	ofEnableDepthTest();
 
@@ -73,6 +52,7 @@ void ofApp::setup(){
 	kdtree.create(terrain.getMesh(0), 10);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
+    
     gui.setup();
     gui.add(drawLevel.setup("Draw Level", 1, 1, 10));
     
@@ -196,18 +176,6 @@ void ofApp::draw(){
 		ofSetColor(ofColor::red);
 		ofDrawSphere(selectedPoint, 2.0);
 	}
-    
-    /*
-    if(surfaceClicked) {
-        ofSetColor(ofColor::blue);
-        //Vector3 centerBox = (terrain.getMesh(0)).getVertex(nodeSelected.points[0]);
-        //Vector3 centerBox = nodeSelected.box.center();
-        //ofDrawSphere((terrain.getMesh(0)).getVertex(nodeSelected.points[0]), 1.0);
-        ofDrawSphere(sphereLocation, 1.0);
-        ofSetColor(ofColor::red);
-        drawBox(selectedBox);
-    }
-     */
 	
 	ofNoFill();
 	ofSetColor(ofColor::white);
@@ -215,7 +183,9 @@ void ofApp::draw(){
 	// debug - check first node to make sure bbox is correct
 	//
     kdtree.draw(kdtree.root, drawLevel, 0);
-    /*
+    /* CODE: Draws leaf nodes and then prints out average points in each leaf.
+             Used for testing.
+    
     kdtree.drawLeafNodes(kdtree.root);
     if(printOnce) {
         kdtree.averagePointsInLeafs();
@@ -462,7 +432,7 @@ void ofApp::mousePressed(int x, int y, int button) {
             bLanderSelected = false;
         }
     }
-    /*
+    /* CODE: Testing intersection with surface when mouse is clicked on.
     TreeNode localNode;
     
     glm::vec3 p = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
