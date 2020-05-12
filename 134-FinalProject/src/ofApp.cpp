@@ -130,6 +130,36 @@ void ofApp::update() {
             }
         }
     }
+    
+    /*
+    // Check for surface collision
+    if(bLanderLoaded) {
+        
+        // Get bottom points for the landerBounds box.
+        vector<Vector3> bboxPoints(4);
+        Vector3 boxMin = landerBounds.parameters[0];
+        Vector3 boxMax = landerBounds.parameters[1];
+        Vector3 boxSize = boxMax - boxMin;
+        
+        bboxPoints.push_back(boxMin);
+        bboxPoints.push_back(Vector3(boxMin.x() + boxSize.x(), boxMin.y(), boxMin.z()));
+        bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y() + boxSize.y(), boxMin.z()));
+        bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y(), boxMin.z() + boxSize.z()));
+        
+        // Make array for contact points and call "bool Octree::checkSurfaceCollision(vector<Vector3> & bboxPoints, TreeNode & node, TreeNode & contactPoints)"
+        vector<Vector3> contactPoints;
+        
+        // Call check surface collision for all points.
+        for(Vector3 boxPoint : bboxPoints)
+            octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints);
+
+        // If there are contact points after the loop above. We know a collision has occured.
+        if(contactPoints.size() > 0) {
+            // Apply collision resolution
+        }
+        
+    }
+     */
         
     
     if(rotateCW)

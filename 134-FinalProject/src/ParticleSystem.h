@@ -71,4 +71,6 @@ public:
     void updateForce(Particle *);
 };
 
+// Definition of Collision Resolution Impulse Force
+
 

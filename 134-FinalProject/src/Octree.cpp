@@ -177,5 +177,25 @@ bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn
     }
 }
 
+void Octree::checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<Vector3> & contactPoints) {
+    // Check if the box contains the point.
+    if(node.box.inside(bboxPoint)) {
+        for(TreeNode child: node.children) {
+           if(child.points.size() > 1)
+           {
+               checkSurfaceCollision(bboxPoint, node, contactPoints);
+            }
+           else if(child.points.size() == 1)
+           {
+               contactPoints.push_back(child.box.center());
+               return;
+           }
+        }
+        return;
+    }
+}
+
+
+
 
 
