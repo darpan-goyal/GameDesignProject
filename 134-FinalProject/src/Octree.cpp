@@ -19,7 +19,16 @@ void Octree::draw(TreeNode & node, int numLevels, int level) {
 // draw only leaf Nodes
 //
 void Octree::drawLeafNodes(TreeNode & node) {
-
+    if(node.children.size() <= 0) {
+        drawBox(node.box);
+        numOfLeafs++;
+        totalPointsInLeaf += node.points.size();
+    }
+    else {
+        for (int i = 0; i < node.children.size(); i++) {
+               drawLeafNodes(node.children[i]);
+        }
+    }
 }
 
 

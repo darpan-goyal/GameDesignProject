@@ -4,15 +4,6 @@
 #include "ray.h"
 #include "TreeNode.h"
 
-/*
-class TreeNode {
-public:
-	Box box;
-	vector<int> points;
-	vector<TreeNode> children;
-};
- */
-
 class Octree {
 public:
 	
@@ -28,7 +19,16 @@ public:
 	static Box meshBounds(const ofMesh &);
 	int getMeshPointsInBox(const ofMesh &mesh, const vector<int> & points, Box & box, vector<int> & pointsRtn);
 	void subDivideBox8(const Box &b, vector<Box> & boxList);
+    
+    void averagePointsInLeafs() {
+        cout << "Total Points in All Leafs " << totalPointsInLeaf << endl;
+         cout << "Total Number of Leafs: " << numOfLeafs << endl;
+        cout << "Average points in leaf is: " << (totalPointsInLeaf / numOfLeafs) << endl;
+        
+    }
 
 	ofMesh mesh;
 	TreeNode root;
+    float totalPointsInLeaf;
+    float numOfLeafs;
 };

@@ -52,13 +52,13 @@ void ofApp::setup(){
 	// create KdTree for terrain
 	//
     float timeBefore = ofGetElapsedTimef();
-	kdtree.create(terrain.getMesh(0), 40);
-    //octree.create(terrain.getMesh(0), 20);
+	//kdtree.create(terrain.getMesh(0), 40);
+    octree.create(terrain.getMesh(0), 15);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
-    gui.add(drawLevel.setup("Draw Level", 1, 1, 20));
+    gui.add(drawLevel.setup("Draw Level", 1, 1, 15));
     
     // Midterm Code
     /*
@@ -117,7 +117,7 @@ void ofApp::update() {
     
     // Altitude Detection
     if(bLanderLoaded) {
-        if(ofGetElapsedTimeMillis() - intersectTime > 2000.0) {
+        if(ofGetElapsedTimeMillis() - intersectTime > 500.0) {
             intersectTime = ofGetElapsedTimeMillis();
             Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
             Vector3 direction = Vector3(0, -1, 0);
@@ -213,17 +213,18 @@ void ofApp::draw(){
 
 	// debug - check first node to make sure bbox is correct
 	//
-    kdtree.draw(kdtree.root, drawLevel, 0);
-    //octree.draw(kdtree.root, drawLevel, 0);
+    //kdtree.draw(kdtree.root, drawLevel, 0);
+    octree.draw(octree.root, drawLevel, 0);
+    
     /* CODE: Draws leaf nodes and then prints out average points in each leaf.
              Used for testing.
     
-    kdtree.drawLeafNodes(kdtree.root);
+    octree.drawLeafNodes(octree.root);
     if(printOnce) {
-        kdtree.averagePointsInLeafs();
+        octree.averagePointsInLeafs();
         printOnce = false;
     }
-     */
+    */
 
     if(thrustEmitter->started)
         thrustEmitter->draw();
