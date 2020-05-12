@@ -131,7 +131,7 @@ void Octree::subdivide(const ofMesh & mesh, TreeNode & node, int numLevels, int 
     vector<Box> childBoxes;
     subDivideBox8(node.box, childBoxes);
     
-    vector<TreeNode> allChildren;
+    vector<TreeNode> allChildren(childBoxes.size());
     
     for(int i = 0; i < childBoxes.size(); i++) {
         allChildren[i].box = childBoxes[i];

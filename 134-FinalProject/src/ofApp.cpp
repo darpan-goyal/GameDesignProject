@@ -58,7 +58,7 @@ void ofApp::setup(){
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
-    gui.add(drawLevel.setup("Draw Level", 1, 1, 40));
+    gui.add(drawLevel.setup("Draw Level", 1, 1, 20));
     
     // Midterm Code
     /*
@@ -124,7 +124,8 @@ void ofApp::update() {
             Ray altDetect = Ray(origin, direction);
             TreeNode localNode;
         
-            if(kdtree.intersect(altDetect, kdtree.root, localNode)) {
+            //if(kdtree.intersect(altDetect, kdtree.root, localNode)) {
+            if(octree.intersect(altDetect, octree.root, localNode)) {
                 landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
             }
         }
@@ -213,6 +214,7 @@ void ofApp::draw(){
 	// debug - check first node to make sure bbox is correct
 	//
     kdtree.draw(kdtree.root, drawLevel, 0);
+    //octree.draw(kdtree.root, drawLevel, 0);
     /* CODE: Draws leaf nodes and then prints out average points in each leaf.
              Used for testing.
     

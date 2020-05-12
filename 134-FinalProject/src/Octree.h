@@ -2,14 +2,16 @@
 #include "ofMain.h"
 #include "box.h"
 #include "ray.h"
+#include "TreeNode.h"
 
-
+/*
 class TreeNode {
 public:
 	Box box;
 	vector<int> points;
 	vector<TreeNode> children;
 };
+ */
 
 class Octree {
 public:
