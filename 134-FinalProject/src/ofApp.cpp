@@ -96,12 +96,12 @@ void ofApp::setup(){
     thrustEmitter = new ParticleEmitter();
     thrustEmitter->type = DiscEmitter;
     thrustEmitter->velocity = glm::vec3(0, -3, 0);
-    thrustEmitter->rate = 50;
+    thrustEmitter->rate = 20;
     thrustEmitter->randomLife = true;
     thrustEmitter->lifeMinMax = ofVec3f(0.15, 0.45);
     thrustEmitter->radius = 0.18;
     thrustEmitter->particleRadius = 0.01;
-    thrustEmitter->groupSize = 100;
+    thrustEmitter->groupSize = 50;
 }
 
 //--------------------------------------------------------------
@@ -118,7 +118,7 @@ void ofApp::update() {
     // Altitude Detection
     if(bLanderLoaded) {
         
-        if(ofGetElapsedTimeMillis() - intersectTime > 500.0) {
+        if(ofGetElapsedTimeMillis() - intersectTime > 500) {
             intersectTime = ofGetElapsedTimeMillis();
             Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
             Vector3 direction = Vector3(0, -1, 0);
@@ -163,18 +163,22 @@ void ofApp::update() {
 
                 
                 // If there are contact points after the loop above. We know a collision has occured.
-                if(contactPoints.size() > 0 && (velocity.y < 0)) {
+                if(contactPoints.size() > 0) {
                     // Apply collision resolution impulse force
-                    float restitution = 0.3;
-                    ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
+                    float restitution = 3.0;
+                    //ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
+                    ofVec3f norm = ofVec3f(0, 1, 0);
                     ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
                     lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                    landerCollide = false;
                     
                 }
             //}
         }
-        if(lunarModelSys->particles[0].velocity.y > 0)
-            landerCollide = false;
+//        else
+//            landerCollide = false;
+//        if(lunarModelSys->particles[0].velocity.y > 0)
+//            landerCollide = false;
     }
         
     

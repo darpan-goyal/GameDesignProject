@@ -183,7 +183,7 @@ bool Octree::checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<
         for(TreeNode child: node.children) {
            if(child.points.size() > 1)
            {
-               if(checkSurfaceCollision(bboxPoint, node, contactPoints))
+               if(checkSurfaceCollision(bboxPoint, child, contactPoints))
                    return true;
             }
            else if(child.points.size() == 1)
