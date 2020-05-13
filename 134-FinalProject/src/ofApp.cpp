@@ -161,32 +161,19 @@ void ofApp::update() {
                 }
             }
 
-                
-                // If there are contact points after the loop above. We know a collision has occured.
-                if(contactPoints.size() > 0) {
-                    // Apply collision resolution impulse force
-                    float restitution = 3.0;
-                    //ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
-                    ofVec3f norm = ofVec3f(0, 1, 0);
-                    ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
-                    lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                    landerCollide = false;
-                    
-                }
-            //}
+            // If there are contact points after the loop above. We know a collision has occured.
+            if(contactPoints.size() > 0) {
+                // Apply collision resolution impulse force
+                float restitution = 3.0;
+                //ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
+                ofVec3f norm = ofVec3f(0, 1, 0);
+                ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
+                lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                landerCollide = false;
+            }
         }
-//        else
-//            landerCollide = false;
-//        if(lunarModelSys->particles[0].velocity.y > 0)
-//            landerCollide = false;
     }
-    
-    //Collision Detection
-    
-    
-    
-        
-    
+
     if(rotateCW)
         lmAngle = lmAngle - 0.75;
     if(rotateCCW)
