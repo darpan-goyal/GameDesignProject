@@ -93,5 +93,7 @@ class ofApp : public ofBaseApp{
         // Altitude detection
         float landerAlt = 0.0;
         float intersectTime = 0.0;
-        bool landerCollide = false; 
+        float printVals = 0.0;
+        bool landerCollide = false;
+    
 };

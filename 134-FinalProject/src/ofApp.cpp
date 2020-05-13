@@ -117,8 +117,7 @@ void ofApp::update() {
     
     // Altitude Detection
     if(bLanderLoaded) {
-        
-        if(ofGetElapsedTimeMillis() - intersectTime > 500.0) {
+        if(ofGetElapsedTimeMillis() - intersectTime > 100.0) {
             intersectTime = ofGetElapsedTimeMillis();
             Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
             Vector3 direction = Vector3(0, -1, 0);
@@ -130,52 +129,12 @@ void ofApp::update() {
                 landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
             }
         }
-    
-        // Check for surface collision
-        // Get bottom points for the landerBounds box.
-        
-        ofVec3f velocity = lunarModelSys->particles[0].velocity;
-        if(landerAlt <= 0.1 && velocity.y < 0) {
-            vector<Vector3> bboxPoints(4);
-            Vector3 boxMin = landerBounds.parameters[0];
-            Vector3 boxMax = landerBounds.parameters[1];
-            Vector3 boxSize = boxMax - boxMin;
-            
-            bboxPoints.push_back(boxMin);
-            bboxPoints.push_back(Vector3(boxMin.x() + boxSize.x(), boxMin.y(), boxMin.z()));
-            bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y() + boxSize.y(), boxMin.z()));
-            bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y(), boxMin.z() + boxSize.z()));
-            
-            // Make array for contact points and call "bool Octree::checkSurfaceCollision(vector<Vector3> & bboxPoints, TreeNode & node, TreeNode & contactPoints)"
-            vector<Vector3> contactPoints;
-            
-            // Call check surface collision for all points.
-            //OPT: As soon as one of them contacts, we can leave the loop
-            
-            if(!landerCollide) {
-                for(Vector3 boxPoint : bboxPoints) {
-                    if(octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints)) {
-                        landerCollide = true;
-                        break;
-                    }
-                }
-            }
-
-                
-                // If there are contact points after the loop above. We know a collision has occured.
-                if(contactPoints.size() > 0 && (velocity.y < 0)) {
-                    // Apply collision resolution impulse force
-                    float restitution = 0.3;
-                    ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
-                    ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
-                    lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                    
-                }
-            //}
-        }
-        if(lunarModelSys->particles[0].velocity.y > 0)
-            landerCollide = false;
     }
+    
+    //Collision Detection
+    
+    
+    
         
     
     if(rotateCW)
