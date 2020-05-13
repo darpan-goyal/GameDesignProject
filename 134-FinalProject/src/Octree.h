@@ -19,7 +19,7 @@ public:
 	static Box meshBounds(const ofMesh &);
 	int getMeshPointsInBox(const ofMesh &mesh, const vector<int> & points, Box & box, vector<int> & pointsRtn);
 	void subDivideBox8(const Box &b, vector<Box> & boxList);
-    void checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<Vector3> & contactPoints);
+    bool checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<Vector3> & contactPoints);
     
     void averagePointsInLeafs() {
         cout << "Total Points in All Leafs " << totalPointsInLeaf << endl;
