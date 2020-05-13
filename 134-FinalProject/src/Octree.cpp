@@ -101,8 +101,6 @@ void Octree::subDivideBox8(const Box &box, vector<Box> & boxList) {
 	float zdist = (max.z() - min.z()) / 2;
 	Vector3 h = Vector3(0, ydist, 0);
 
-	//  generate ground floor
-	//
 	Box b[8];
 	b[0] = Box(min, center);
 	b[1] = Box(b[0].min() + Vector3(xdist, 0, 0), b[0].max() + Vector3(xdist, 0, 0));
@@ -113,8 +111,6 @@ void Octree::subDivideBox8(const Box &box, vector<Box> & boxList) {
 	for (int i = 0; i < 4; i++)
 		boxList.push_back(b[i]);
 
-	// generate second story
-	//
 	for (int i = 4; i < 8; i++) {
 		b[i] = Box(b[i - 4].min() + h, b[i - 4].max() + h);
 		boxList.push_back(b[i]);
@@ -159,6 +155,20 @@ void Octree::subdivide(const ofMesh & mesh, TreeNode & node, int numLevels, int 
 }
 
 bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn) {
+    if(node.box.intersect(ray, 0, 1000)) {
+        for(TreeNode child: node.children) {
+            if(child.box.intersect(ray, 0, 1000)) {
+                if(child.points.size() <= 3) {
+                    nodeRtn = child;
+                    return true;
+                }
+                else if(child.points.size() > 3) {
+                    intersect(ray, child, nodeRtn);
+                }
+            }
+        }
+    }
+    /*
     if(node.box.intersect(ray, 0, 1000))
     {
        for(TreeNode child: node.children) {
@@ -175,6 +185,7 @@ bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn
         }
         return false;
     }
+     */
 }
 
 bool Octree::checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<Vector3> & contactPoints) {
