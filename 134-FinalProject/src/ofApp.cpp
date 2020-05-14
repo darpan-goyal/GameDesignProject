@@ -18,8 +18,7 @@ void ofApp::setup(){
 	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
-    
-//	ofSetWindowShape(1024, 768);
+    //	ofSetWindowShape(1024, 768);
     
 	cam.setDistance(10);
 	cam.setNearClip(.1);
@@ -53,12 +52,12 @@ void ofApp::setup(){
 	//
     float timeBefore = ofGetElapsedTimef();
 	//kdtree.create(terrain.getMesh(0), 40);
-    octree.create(terrain.getMesh(0), 14);
+    octree.create(terrain.getMesh(0), 8);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
-    gui.add(drawLevel.setup("Draw Level", 1, 1, 15));
+    gui.add(drawLevel.setup("Draw Level", 1, 1, 7));
     
     // Midterm Code
     /*
@@ -115,40 +114,27 @@ void ofApp::update() {
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
     
-    // Altitude Detection
     if(bLanderLoaded) {
+        // Altitude Detection - Every 20th of a second.
+        Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
+        Vector3 direction = Vector3(0, -1, 0);
+        Ray altDetect = Ray(origin, direction);
+        TreeNode localNode;
         
-        if(ofGetElapsedTimeMillis() - intersectTime > 500) {
-            intersectTime = ofGetElapsedTimeMillis();
-            Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
-            Vector3 direction = Vector3(0, -1, 0);
-            Ray altDetect = Ray(origin, direction);
-            TreeNode localNode;
-        
-            //if(kdtree.intersect(altDetect, kdtree.root, localNode)) {
-            if(octree.intersect(altDetect, octree.root, localNode)) {
-                landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
-            }
+        if(octree.intersect(altDetect, octree.root, localNode)) {
+            landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
         }
         
         // Collision Detection
-        ofVec3f velocity = lunarModelSys->particles[0].velocity;
         
-        if(velocity.y < -0.03) {
-            //ofVec3f landerPos = lunarModelSys->particles[0].position;
+        ofVec3f landerVel = lunarModelSys->particles[0].velocity;
+        
+        if(landerVel.y < -0.03) {
             float stepSize = ofGetFrameRate();
-            ofVec3f distancePerFrame = -velocity * (1.0 / 2);
+            ofVec3f distancePerFrame = -landerVel + (1.0 / 20.0);
             
-            if(ofGetElapsedTimeMillis() - printVals > 500) {
-                printVals = ofGetElapsedTimeMillis();
-                //cout << "Velocity of lander: " << velocity << endl;
-                //cout << "distance per frame: " << distancePerFrame << endl;
-                //cout << "alt: " << landerAlt << endl;
-            }
-            
-            if(landerAlt <= 0.1) {
-            
-            //if(landerAlt <= 0.1 || distancePerFrame.y > landerAlt) {
+            if(distancePerFrame.y > landerAlt) {
+                landerCollide = true;
                 vector<Vector3> bboxPoints(4);
                 Vector3 boxMin = landerBounds.parameters[0];
                 Vector3 boxMax = landerBounds.parameters[1];
@@ -160,85 +146,32 @@ void ofApp::update() {
                 
                 vector<Vector3> contactPoints;
                 
-                if(!landerCollide) {
+                if(landerCollide) {
                     for(Vector3 boxPoint : bboxPoints) {
                         if(octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints)) {
-                            landerCollide = true;
+                            float restitution = 2.0;
+                            ofVec3f norm = ofVec3f(0, 1, 0);
+                            ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
+                            lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                            landerCollide = false;
+                            cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
                             break;
                         }
                     }
                 }
-                
-                if(contactPoints.size() > 0) {
-                    float restitution = 2.0;
-                    ofVec3f norm = ofVec3f(0, 1, 0);
-                    ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
-                    lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                    cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
-                }
             }
         }
-        // Once the velcoity starts going upwards, then you can once again check for collision.
         else {
             landerCollide = false;
         }
-        
-        /*
-        // Check for surface collision
-        // Get bottom points for the landerBounds box.
-        
-        ofVec3f velocity = lunarModelSys->particles[0].velocity;
-        if(landerAlt <= 0.1 && velocity.y < 0) {
-            vector<Vector3> bboxPoints(4);
-            Vector3 boxMin = landerBounds.parameters[0];
-            Vector3 boxMax = landerBounds.parameters[1];
-            Vector3 boxSize = boxMax - boxMin;
-            
-            bboxPoints.push_back(boxMin);
-            bboxPoints.push_back(Vector3(boxMin.x() + boxSize.x(), boxMin.y(), boxMin.z()));
-            bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y() + boxSize.y(), boxMin.z()));
-            bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y(), boxMin.z() + boxSize.z()));
-            
-            // Make array for contact points and call "bool Octree::checkSurfaceCollision(vector<Vector3> & bboxPoints, TreeNode & node, TreeNode & contactPoints)"
-            vector<Vector3> contactPoints;
-            
-            // Call check surface collision for all points.
-            //OPT: As soon as one of them contacts, we can leave the loop
-            
-            if(!landerCollide) {
-                for(Vector3 boxPoint : bboxPoints) {
-                    if(octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints)) {
-                        landerCollide = true;
-                        break;
-                    }
-                }
-            }
-
-                
-                // If there are contact points after the loop above. We know a collision has occured.
-            if(contactPoints.size() > 0) {
-                // Apply collision resolution impulse force
-                float restitution = 3.0;
-                //ofVec3f norm = ofVec3f(contactPoints[0].x(), contactPoints[0].y(), contactPoints[0].z()).getNormalized();
-                ofVec3f norm = ofVec3f(0, 1, 0);
-                ofVec3f impForce = (restitution + 1.0) * ((-velocity.dot(norm)) * norm);
-                lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                //landerCollide = false;
-            }
-        }
-        else
-            landerCollide = false;
-    */
     }
+    
     if(rotateCW)
         lmAngle = lmAngle - 0.75;
     if(rotateCCW)
         lmAngle = lmAngle + 0.75;
     if(rotateCW || rotateCCW)
-    {
         lander.setRotation(0, lmAngle, 0, 1, 0);
-    }
-    
 }
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -322,7 +255,8 @@ void ofApp::draw(){
         octree.averagePointsInLeafs();
         printOnce = false;
     }
-    */
+     */
+    
 
     if(thrustEmitter->started)
         thrustEmitter->draw();

@@ -158,11 +158,11 @@ bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn
     if(node.box.intersect(ray, 0, 1000)) {
         for(TreeNode child: node.children) {
             if(child.box.intersect(ray, 0, 1000)) {
-                if(child.points.size() <= 3) {
+                if(child.children.size() == 0) {
                     nodeRtn = child;
                     return true;
                 }
-                else if(child.points.size() > 3) {
+                else {
                     intersect(ray, child, nodeRtn);
                 }
             }
@@ -185,23 +185,23 @@ bool Octree::intersect(const Ray &ray, const TreeNode & node, TreeNode & nodeRtn
         }
         return false;
     }
-     */
+    */
 }
 
 bool Octree::checkSurfaceCollision(Vector3 & bboxPoint, TreeNode & node, vector<Vector3> & contactPoints) {
     // Check if the box contains the point.
     if(node.box.inside(bboxPoint)) {
         for(TreeNode child: node.children) {
-           if(child.points.size() > 1)
-           {
-               if(checkSurfaceCollision(bboxPoint, child, contactPoints))
-                   return true;
+            if(child.points.size() <= 10 && child.children.size() == 0)
+            {
+                contactPoints.push_back(child.box.center());
+                return true;
             }
-           else if(child.points.size() == 1)
-           {
-               contactPoints.push_back(child.box.center());
-               return true;
-           }
+            if(child.points.size() > 10)
+            {
+                if(checkSurfaceCollision(bboxPoint, child, contactPoints))
+                    return true;
+            }
         }
         return false;
     }
