@@ -43,6 +43,7 @@ class ofApp : public ofBaseApp{
 		ofEasyCam cam;
 		ofCamera top;
 		ofCamera *theCam;
+        ofCamera traceCam;
 		ofxAssimpModelLoader terrain, lander;
 		ofLight light;
 		Box boundingBox;
@@ -76,6 +77,8 @@ class ofApp : public ofBaseApp{
     
         ofxPanel gui;
         ofxFloatSlider drawLevel;
+        ofxFloatSlider camFOV;
+        ofxFloatSlider camNC;
         bool printOnce = true;
         TreeNode nodeSelected;
         Box selectedBox;

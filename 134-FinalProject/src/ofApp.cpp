@@ -32,10 +32,12 @@ void ofApp::setup(){
     // Loading a background image
     bBackgroundLoaded = backgroundImage.load("images/starfield-purple1.jpg");
 
-	top.setPosition(0, 25, 0);
-	top.lookAt(glm::vec3(0, 0, 0));
 	top.setNearClip(.1);
-	top.setFov(65.5);   // approx equivalent to 28mm in 35mm format
+	top.setFov(80);   // approx equivalent to 28mm in 35mm format
+    
+    traceCam.setPosition(0, 1, 130);
+    traceCam.setNearClip(.1);
+    traceCam.setFov(40);   // approx equivalent to 28mm in 35mm format
 
 	theCam = &cam;
 
@@ -58,6 +60,8 @@ void ofApp::setup(){
     
     gui.setup();
     gui.add(drawLevel.setup("Draw Level", 1, 1, 7));
+    //gui.add(camFOV.setup("FOV", 65.5, 0, 100));
+    //gui.add(camNC.setup("Near Clip", .1, 0, 10));
     
     // Midterm Code
     /*
@@ -126,14 +130,13 @@ void ofApp::update() {
         }
         
         // Collision Detection
-        
         ofVec3f landerVel = lunarModelSys->particles[0].velocity;
         
         if(landerVel.y < -0.03) {
             float stepSize = ofGetFrameRate();
-            ofVec3f distancePerFrame = -landerVel + (1.0 / 20.0);
+            ofVec3f distancePerFrame = -landerVel + (1.0 / stepSize);
             
-            if(distancePerFrame.y > landerAlt) {
+            if(distancePerFrame.y > landerAlt && landerAlt <= 0.1) {
                 landerCollide = true;
                 vector<Vector3> bboxPoints(4);
                 Vector3 boxMin = landerBounds.parameters[0];
@@ -148,8 +151,9 @@ void ofApp::update() {
                 
                 if(landerCollide) {
                     for(Vector3 boxPoint : bboxPoints) {
-                        if(octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints)) {
-                            float restitution = 2.0;
+                        octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints);
+                        if(contactPoints.size() > 0) {
+                            float restitution = 1.0;
                             ofVec3f norm = ofVec3f(0, 1, 0);
                             ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
                             lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
@@ -161,10 +165,15 @@ void ofApp::update() {
                 }
             }
         }
-        else {
+        else
             landerCollide = false;
-        }
     }
+    
+    // Update Cameras
+    top.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y - 3, lunarModelSys->particles[0].position.z);
+    top.lookAt(glm::vec3(lunarModelSys->particles[0].position.x, 0, lunarModelSys->particles[0].position.z));
+    
+    traceCam.lookAt(lunarModelSys->particles[0].position);
     
     if(rotateCW)
         lmAngle = lmAngle - 0.75;
@@ -322,7 +331,10 @@ void ofApp::keyPressed(int key) {
 	case 'h':
 		break;
 	case 'r':
-		cam.reset();
+        //cam.lookAt(lunarModelSys->particles[0].position);
+        //cam.setPosition(lunarModelSys->particles[0].position + ofVec3f(50, 50, 50));
+        cam.setDistance(15);
+        cam.setTarget(lunarModelSys->particles[0].position);
 		break;
 	case 'p':
 		savePicture();
@@ -397,6 +409,9 @@ void ofApp::keyPressed(int key) {
 	case OF_KEY_F2:
 		theCam = &top;
 		break;
+    case OF_KEY_F3:
+        theCam = &traceCam;
+        break;
 	default:
 		break;
 	}
@@ -512,11 +527,14 @@ void ofApp::mousePressed(int x, int y, int button) {
         cout << "Intersect detection time in ms: " << (timeAfter - timeBefore) << endl;
         Vector3 selectedBoxCenter = localNode.box.center();
         selectedPoint = ofVec3f(selectedBoxCenter.x(), selectedBoxCenter.y(), selectedBoxCenter.z());
+        cout << "Selected points coordinators: " << selectedPoint << endl;
+        
         bPointSelected = true;
     }
     else
         cout << "The surface wasn't clicked on." << endl;
-     */
+    */
+
 }
 
 
