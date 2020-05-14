@@ -25,6 +25,8 @@ void ofApp::setup(){
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
 	cam.disableMouseInput();
     
+    
+    
     ofSetVerticalSync(true);
 	ofEnableSmoothing();
 	ofEnableDepthTest();
@@ -64,8 +66,8 @@ void ofApp::setup(){
     //gui.add(camNC.setup("Near Clip", .1, 0, 10));
     
     // Midterm Code
-    /*
-    if (lander.loadModel("geo/lander.obj")) {
+    
+    if (lander.loadModel("geo/rocket2.obj")) {
         lander.setScaleNormalization(false);
         //lander.setScale(.5, .5, .5);
         //lander.setRotation(0, -180, 1, 0, 0);
@@ -77,7 +79,6 @@ void ofApp::setup(){
         cout << "Error: Can't load model" << "geo/lander.obj" << endl;
         ofExit(0);
     }
-     */
     
     lmAngle = 0;
     headingVector = glm::vec3(0, 0, 0);
@@ -105,6 +106,45 @@ void ofApp::setup(){
     thrustEmitter->radius = 0.18;
     thrustEmitter->particleRadius = 0.01;
     thrustEmitter->groupSize = 50;
+    
+    keyLight.setup();
+    keyLight.enable();
+    keyLight.setAreaLight(2, 2);
+    keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+    keyLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+    keyLight.setSpecularColor(ofFloatColor(1, 1, 1));
+
+    //keyLight.rotate(45, ofVec3f(0, 1, 0));
+    keyLight.rotate(180, ofVec3f(1, 0, 0));
+    keyLight.setPosition(lander.getPosition());
+    
+    ofVec3f pos = lander.getPosition();
+    fillLight.setup();
+    fillLight.enable();
+    fillLight.setSpotlight();
+    fillLight.setScale(.1);
+    fillLight.setSpotlightCutOff(15);
+    fillLight.setAttenuation(2, .001, .001);
+    fillLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+    fillLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+    fillLight.setSpecularColor(ofFloatColor(1, 1, 1));
+    fillLight.rotate(-30, ofVec3f(1, 0, 0));
+    fillLight.rotate(-90, ofVec3f(0, 1, 0));
+    fillLight.setPosition(pos.x,pos.y,pos.z);
+    
+    fillLight2.setup();
+    fillLight2.enable();
+    fillLight2.setSpotlight();
+    fillLight2.setScale(.1);
+    fillLight2.setSpotlightCutOff(15);
+    fillLight2.setAttenuation(2, .001, .001);
+    fillLight2.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+    fillLight2.setDiffuseColor(ofFloatColor(1, 1, 1));
+    fillLight2.setSpecularColor(ofFloatColor(1, 1, 1));
+    fillLight2.rotate(-30, ofVec3f(1, 0, 0));
+    fillLight2.rotate(90, ofVec3f(0, 1, 0));
+    fillLight2.setPosition(pos.x,pos.y,pos.z);
+    
 }
 
 //--------------------------------------------------------------
@@ -114,6 +154,12 @@ void ofApp::update() {
     // Midterm Code
     lunarModelSys->update();
     lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
+    
+    ofVec3f pos = lander.getPosition();
+    keyLight.setPosition(pos.x,pos.y - 100,pos.z);
+    fillLight.setPosition(pos.x,pos.y,pos.z);
+    fillLight2.setPosition(pos.x,pos.y,pos.z);
+    
     
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
@@ -176,9 +222,18 @@ void ofApp::update() {
     traceCam.lookAt(lunarModelSys->particles[0].position);
     
     if(rotateCW)
+    {
         lmAngle = lmAngle - 0.75;
+        fillLight.rotate(-0.75, ofVec3f(0, 1, 0));
+        fillLight2.rotate(-0.75, ofVec3f(0, 1, 0));
+        
+    }
     if(rotateCCW)
+    {
         lmAngle = lmAngle + 0.75;
+        fillLight.rotate(0.75, ofVec3f(0, 1, 0));
+        fillLight2.rotate(0.75, ofVec3f(0, 1, 0));
+    }
     if(rotateCW || rotateCCW)
         lander.setRotation(0, lmAngle, 0, 1, 0);
 }
@@ -197,7 +252,7 @@ void ofApp::draw(){
     }
     
 	theCam->begin();
-
+    
 	ofPushMatrix();
 	if (bWireframe) {                    // wireframe mode  (include axis)
 		ofDisableLighting();
@@ -212,7 +267,7 @@ void ofApp::draw(){
 	else {
 		ofEnableLighting();              // shaded mode
 		terrain.drawFaces();
-
+        keyLight.draw();
 		if (bLanderLoaded) {
 			lander.drawFaces();
 			if (!bTerrainSelected) drawAxis(lander.getPosition());
@@ -682,20 +737,20 @@ void ofApp::initLightingAndMaterials() {
 	{ GL_TRUE };
 
 
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT0, GL_POSITION, position);
+//	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+//	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+//	glLightfv(GL_LIGHT0, GL_POSITION, position);
+//
+//	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+//	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+//	glLightfv(GL_LIGHT1, GL_POSITION, position);
+//
+//
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+//	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
 
-	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT1, GL_POSITION, position);
-
-
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
+//	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHT0);
 //	glEnable(GL_LIGHT1);
 	glShadeModel(GL_SMOOTH);
 } 

@@ -98,5 +98,6 @@ class ofApp : public ofBaseApp{
         float intersectTime = 0.0;
         float printVals = 0.0;
         bool landerCollide = false;
+        ofLight keyLight,fillLight,fillLight2;
     
 };
