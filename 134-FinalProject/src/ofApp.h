@@ -117,11 +117,16 @@ class ofApp : public ofBaseApp{
         vector<ofVec3f> landAreaCoords;
         vector<ofPolyline> landAreaPolys;
         bool checkInsideLandingAreas(ofVec3f landerPos);
+        vector<bool> landedAreas;
+        float checkLandingVelocity(float landingVel);
     
         ofSoundPlayer bgSound;
         ofSoundPlayer thrust;
     
         bool thrustOn = false;
-    bool landed = false;
+        bool landed = false;
+        
+        bool gameOver = false;
+        float gameScore = 0;
     
 };

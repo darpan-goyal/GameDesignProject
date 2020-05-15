@@ -39,11 +39,11 @@ void ofApp::setup(){
     bgSound.play();
 
 	top.setNearClip(.1);
-	top.setFov(80);   // approx equivalent to 28mm in 35mm format
+	top.setFov(80);
     
     traceCam.setPosition(0, 1, 130);
     traceCam.setNearClip(.1);
-    traceCam.setFov(40);   // approx equivalent to 28mm in 35mm format
+    traceCam.setFov(40);
 
 	theCam = &cam;
 
@@ -178,6 +178,10 @@ void ofApp::setup(){
         landingSquare.addVertex(landAreaCoords[i]);
         landAreaPolys.push_back(landingSquare);
     }
+    
+    landedAreas.push_back(false);
+    landedAreas.push_back(false);
+    landedAreas.push_back(false);
 }
 
 // Load vertex buffer in preparation for rendering
@@ -219,7 +223,7 @@ void ofApp::update() {
     explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
     
     if(bLanderLoaded) {
-        // Altitude Detection - Every 20th of a second.
+        // Altitude Detection
         Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
         Vector3 direction = Vector3(0, -1, 0);
         Ray altDetect = Ray(origin, direction);
@@ -255,19 +259,26 @@ void ofApp::update() {
                         if(contactPoints.size() > 0) {
                             float restitution = 1.0;
                             ofVec3f norm = ofVec3f(0, 1, 0);
-                            if(checkInsideLandingAreas(lunarModelSys->particles[0].position)){
-                                    cout << "Landed in a landing area: " << endl;
-                                    ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
-                                    lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                                    landed = true;
+                            ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
+                            lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                            
+                            float scoreReturned = checkLandingVelocity(landerVel.y);
+                            bool insideLA = checkInsideLandingAreas(lunarModelSys->particles[0].position);
+                            
+                            if(insideLA && scoreReturned != 0) {
+                                cout << "Landed in a landing area!" << endl;
+                                gameScore += scoreReturned;
+                                cout << "Player score: " << scoreReturned << endl;
                             }
-                            else{
-                                cout << "Landed outside landing area: " << endl;
-                                landerCollide = false;
-                                ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
-                                lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                            else {
+                                if(insideLA && scoreReturned == 0)
+                                    cout << "Landed inside landing area, but impact too hard!" << endl;
+                                else
+                                    cout << "Landed outside landing area!" << endl;
                                 explosions->start();
+                                gameOver = true;
                             }
+                            landerCollide = false;
                             cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
                             break;
                         }
@@ -303,21 +314,35 @@ void ofApp::update() {
 }
 
 bool ofApp::checkInsideLandingAreas(ofVec3f landerPos) {
-    bool insideLA = false;
     for(int i = 0; i < landAreaCoords.size(); i++) {
+        if(landedAreas[i]) {
+            cout << "This area has already been landed on." << endl;
+            return false;
+        }
         if(landerPos.x >= landAreaCoords[i].x && landerPos.x <= landAreaCoords[i].x + landAreaHeight &&
            landerPos.z >= landAreaCoords[i].z && landerPos.z <= landAreaCoords[i].z + landAreaWidth) {
+            landedAreas[i] = true;
             return true;
         }
     }
-    return insideLA;
+    return false;
+}
+
+float ofApp::checkLandingVelocity(float landingVel) {
+    landingVel = -landingVel;
+    if(landingVel >= 1.0) {
+        gameOver = true;
+        return 0;
+    }
+    else {
+        return (100.0 - (landingVel * 100));
+    }
 }
 
 
 //--------------------------------------------------------------
 void ofApp::draw(){
     // Drawing background image
-    //
     if (bBackgroundLoaded) {
         ofPushMatrix();
         ofDisableDepthTest();
@@ -384,23 +409,20 @@ void ofApp::draw(){
     ofNoFill();
     ofSetColor(0, 230, 0);
     for(int i = 0; i < landAreaPolys.size(); i++) {
+        if(landedAreas[i])
+             ofSetColor(255, 0, 0);
+        else
+             ofSetColor(0, 230, 0);
         landAreaPolys[i].draw();
         for(int j = 0; j < landAreaPolys[i].getVertices().size() -1; j++) {
             ofDrawSphere(landAreaPolys[i].getVertices()[j], 0.7);
         }
     }
-    /*
-    lineOne.draw();
-    for(int i = 0; i < lineOne.getVertices().size() -1; i++) {
-        ofDrawSphere(lineOne.getVertices()[i], 0.5);
-    }
-     */
 
 	ofSetColor(ofColor::white);
 
 	// debug - check first node to make sure bbox is correct
 	//
-    //kdtree.draw(kdtree.root, drawLevel, 0);
     octree.draw(octree.root, drawLevel, 0);
     
     /* CODE: Draws leaf nodes and then prints out average points in each leaf.
@@ -413,9 +435,6 @@ void ofApp::draw(){
     }
      */
     
-
-    //if(thrustEmitter->started)
-        //thrustEmitter->draw();
     explosions->draw();
 	theCam->end();
     ofDisableDepthTest();
