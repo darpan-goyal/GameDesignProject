@@ -154,9 +154,10 @@ void ofApp::setup(){
     explosions->setOneShot(true);
     explosions->setEmitterType(RadialEmitter);
     explosions->setParticleRadius(0.02);
-    explosions->setLifespanRange(ofVec2f(0.01, 1));
+    explosions->setLifespan(0.8);
+    //explosions->setLifespanRange(ofVec2f(0.01, 0.05));
     explosions->setGroupSize(200);
-    explosions->randomLife = true;
+    //explosions->randomLife = true;
 }
 
 // Load vertex buffer in preparation for rendering
