@@ -145,6 +145,18 @@ void ofApp::setup(){
     fillLight.rotate(-90, ofVec3f(1, 0, 0));
     //fillLight.rotate(-90, ofVec3f(0, 1, 0));
     fillLight.setPosition(pos.x,pos.y + 10,pos.z);
+    
+    explosions = new ParticleEmitter();
+    explosions->type = RadialEmitter;
+    explosions->particleColor = ofColor::yellow;
+    explosions->visible = false;
+    explosions->velocity = ofVec3f(3, 0, 3);
+    explosions->setOneShot(true);
+    explosions->setEmitterType(RadialEmitter);
+    explosions->setParticleRadius(0.02);
+    explosions->setLifespanRange(ofVec2f(0.01, 1));
+    explosions->setGroupSize(200);
+    explosions->randomLife = true;
 }
 
 // Load vertex buffer in preparation for rendering
@@ -180,6 +192,10 @@ void ofApp::update() {
     
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
+    
+    explosions->update();
+    
+    explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
     
     if(bLanderLoaded) {
         // Altitude Detection - Every 20th of a second.
@@ -221,6 +237,7 @@ void ofApp::update() {
                             ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
                             lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
                             landerCollide = false;
+                            explosions->start();
                             cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
                             break;
                         }
@@ -341,7 +358,7 @@ void ofApp::draw(){
 
     //if(thrustEmitter->started)
         //thrustEmitter->draw();
-    
+    explosions->draw();
 	theCam->end();
     ofDisableDepthTest();
     gui.draw();

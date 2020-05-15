@@ -108,4 +108,6 @@ class ofApp : public ofBaseApp{
         ofShader shader;
         
         void loadVbo();
+    
+        ParticleEmitter *explosions;
 };
