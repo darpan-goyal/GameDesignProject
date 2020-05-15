@@ -249,14 +249,18 @@ void ofApp::update() {
                         if(contactPoints.size() > 0) {
                             float restitution = 1.0;
                             ofVec3f norm = ofVec3f(0, 1, 0);
-                            ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
-                            lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                            if(checkInsideLandingAreas(lunarModelSys->particles[0].position))
-                                cout << "Landed in a landing area: " << endl;
-                            else
+                            if(checkInsideLandingAreas(lunarModelSys->particles[0].position)){
+                                    cout << "Landed in a landing area: " << endl;
+                                    ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
+                                    lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                            }
+                            else{
                                 cout << "Landed outside landing area: " << endl;
-                            landerCollide = false;
-                            explosions->start();
+                                landerCollide = false;
+                                ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
+                                lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                                explosions->start();
+                            }
                             cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
                             break;
                         }
