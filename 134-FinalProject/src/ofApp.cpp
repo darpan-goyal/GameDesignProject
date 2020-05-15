@@ -25,8 +25,6 @@ void ofApp::setup(){
 	cam.setFov(65.5);   // approx equivalent to 28mm in 35mm format
 	cam.disableMouseInput();
     
-    
-    
     ofSetVerticalSync(true);
 	ofEnableSmoothing();
 	ofEnableDepthTest();
@@ -51,6 +49,22 @@ void ofApp::setup(){
 	terrain.setScaleNormalization(false);
 
 	boundingBox = meshBounds(terrain.getMesh(0));
+    
+    // Texture loading
+    ofDisableArbTex();     // disable rectangular textures
+    
+    // Load Textures
+    if (!ofLoadImage(particleTex, "images/dot.png")) {
+        cout << "Particle Texture File: images/dot.png not found" << endl;
+        ofExit();
+    }
+
+    // Load the Shaders
+    #ifdef TARGET_OPENGLES
+        shader.load("shaders_gles/shader");
+    #else
+        shader.load("shaders/shader");
+    #endif
 
 	// create KdTree for terrain
 	//
@@ -103,9 +117,9 @@ void ofApp::setup(){
     thrustEmitter->rate = 20;
     thrustEmitter->randomLife = true;
     thrustEmitter->lifeMinMax = ofVec3f(0.15, 0.45);
-    thrustEmitter->radius = 0.18;
-    thrustEmitter->particleRadius = 0.01;
-    thrustEmitter->groupSize = 50;
+    thrustEmitter->radius = 0.20;
+    thrustEmitter->particleRadius = 5;
+    thrustEmitter->groupSize = 100;
     
     keyLight.setup();
     keyLight.enable();
@@ -131,7 +145,23 @@ void ofApp::setup(){
     fillLight.rotate(-90, ofVec3f(1, 0, 0));
     //fillLight.rotate(-90, ofVec3f(0, 1, 0));
     fillLight.setPosition(pos.x,pos.y + 10,pos.z);
-    
+}
+
+// Load vertex buffer in preparation for rendering
+void ofApp::loadVbo() {
+    if (thrustEmitter->sys->particles.size() < 1) return;
+
+    vector<ofVec3f> sizes;
+    vector<ofVec3f> points;
+    for (int i = 0; i < thrustEmitter->sys->particles.size(); i++) {
+        points.push_back(thrustEmitter->sys->particles[i].position);
+        sizes.push_back(ofVec3f(thrustEmitter->particleRadius));
+    }
+    // upload the data to the vbo
+    int total = (int)points.size();
+    vbo.clear();
+    vbo.setVertexData(&points[0], total, GL_STATIC_DRAW);
+    vbo.setNormalData(&sizes[0], total, GL_STATIC_DRAW);
 }
 
 //--------------------------------------------------------------
@@ -309,12 +339,47 @@ void ofApp::draw(){
      */
     
 
-    if(thrustEmitter->started)
-        thrustEmitter->draw();
+    //if(thrustEmitter->started)
+        //thrustEmitter->draw();
     
 	theCam->end();
     ofDisableDepthTest();
     gui.draw();
+    
+    if(thrustEmitter->started) {
+        loadVbo();
+        glDepthMask(GL_FALSE);
+
+        ofSetColor(255, 100, 90);
+
+        // this makes everything look glowy :)
+        //
+        ofEnableBlendMode(OF_BLENDMODE_ADD);
+        ofEnablePointSprites();
+
+        // begin drawing in the camera
+        shader.begin();
+        theCam->begin();
+
+        // draw particle emitter here..
+        //emitter.draw();
+        particleTex.bind();
+        vbo.draw(GL_POINTS, 0, (int)thrustEmitter->sys->particles.size());
+        particleTex.unbind();
+
+        //  end drawing in the camera
+        //
+        theCam->end();
+        shader.end();
+
+        ofDisablePointSprites();
+        ofDisableBlendMode();
+        ofEnableAlphaBlending();
+
+        // set back the depth mask
+        //
+        glDepthMask(GL_TRUE);
+    }
     
     // Midterm Code
     string str;

@@ -100,4 +100,12 @@ class ofApp : public ofBaseApp{
         bool landerCollide = false;
         ofLight keyLight,fillLight,fillLight2;
     
+        // Textures
+        ofTexture particleTex;
+
+        // Shaders
+        ofVbo vbo;
+        ofShader shader;
+        
+        void loadVbo();
 };
