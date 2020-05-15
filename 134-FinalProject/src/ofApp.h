@@ -118,5 +118,10 @@ class ofApp : public ofBaseApp{
         vector<ofPolyline> landAreaPolys;
         bool checkInsideLandingAreas(ofVec3f landerPos);
     
+        ofSoundPlayer bgSound;
+        ofSoundPlayer thrust;
+    
+        bool thrustOn = false;
+    bool landed = false;
     
 };

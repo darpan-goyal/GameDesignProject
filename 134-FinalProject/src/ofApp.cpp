@@ -31,6 +31,12 @@ void ofApp::setup(){
     
     // Loading a background image
     bBackgroundLoaded = backgroundImage.load("images/starfield-purple1.jpg");
+    
+    bgSound.load("sounds/space.wav");
+    
+    thrust.load("sounds/rocket-thrust-01.wav");
+    
+    bgSound.play();
 
 	top.setNearClip(.1);
 	top.setFov(80);   // approx equivalent to 28mm in 35mm format
@@ -253,6 +259,7 @@ void ofApp::update() {
                                     cout << "Landed in a landing area: " << endl;
                                     ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
                                     lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                                    landed = true;
                             }
                             else{
                                 cout << "Landed outside landing area: " << endl;
@@ -536,11 +543,19 @@ void ofApp::keyPressed(int key) {
     case 'w':     // spacecraft thrust UP
         tForce->applied = false;
         thrustEmitter->start();
+        if(!thrustOn){
+            thrustOn = true;
+            thrust.play();
+        }
         tForce->set(glm::vec3(0, 1.5, 0));
         break;
     case 's':     // spacefraft thrust DOWN
         tForce->applied = false;
         thrustEmitter->start();
+        if(!thrustOn){
+            thrustOn = true;
+            thrust.play();
+        }
         tForce->set(glm::vec3(0, -1.5, 0));
         break;
 	case OF_KEY_ALT:
@@ -620,10 +635,14 @@ void ofApp::keyReleased(int key) {
     case 'w':
         tForce->applied = true;
         thrustEmitter->stop();
+        thrust.stop();
+        thrustOn = false;
         break;
     case 's':
         tForce->applied = true;
         thrustEmitter->stop();
+        thrust.stop();
+        thrustOn = false;
         break;
     case 'd':
         rotateCW = false;
@@ -865,9 +884,9 @@ void ofApp::initLightingAndMaterials() {
 	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
 	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
 
-//	glEnable(GL_LIGHTING);
-//	glEnable(GL_LIGHT0);
-//	glEnable(GL_LIGHT1);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glEnable(GL_LIGHT1);
 	glShadeModel(GL_SMOOTH);
 } 
 
