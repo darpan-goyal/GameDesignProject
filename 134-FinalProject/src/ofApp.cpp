@@ -112,7 +112,7 @@ void ofApp::setup(){
     keyLight.setAreaLight(2, 2);
     keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
     keyLight.setDiffuseColor(ofFloatColor(1, 1, 1));
-    keyLight.setSpecularColor(ofFloatColor(1, 1, 1));
+    keyLight.setSpecularColor(ofFloatColor(1, 0, 0));
 
     //keyLight.rotate(45, ofVec3f(0, 1, 0));
     keyLight.rotate(180, ofVec3f(1, 0, 0));
@@ -123,27 +123,14 @@ void ofApp::setup(){
     fillLight.enable();
     fillLight.setSpotlight();
     fillLight.setScale(.1);
-    fillLight.setSpotlightCutOff(15);
-    fillLight.setAttenuation(2, .001, .001);
-    fillLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+    fillLight.setSpotlightCutOff(200);
+    fillLight.setAttenuation(2, .00001, .00001);
+    fillLight.setAmbientColor(ofFloatColor(0.1, 0, 0));
     fillLight.setDiffuseColor(ofFloatColor(1, 1, 1));
-    fillLight.setSpecularColor(ofFloatColor(1, 1, 1));
-    fillLight.rotate(-30, ofVec3f(1, 0, 0));
-    fillLight.rotate(-90, ofVec3f(0, 1, 0));
-    fillLight.setPosition(pos.x,pos.y,pos.z);
-    
-    fillLight2.setup();
-    fillLight2.enable();
-    fillLight2.setSpotlight();
-    fillLight2.setScale(.1);
-    fillLight2.setSpotlightCutOff(15);
-    fillLight2.setAttenuation(2, .001, .001);
-    fillLight2.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
-    fillLight2.setDiffuseColor(ofFloatColor(1, 1, 1));
-    fillLight2.setSpecularColor(ofFloatColor(1, 1, 1));
-    fillLight2.rotate(-30, ofVec3f(1, 0, 0));
-    fillLight2.rotate(90, ofVec3f(0, 1, 0));
-    fillLight2.setPosition(pos.x,pos.y,pos.z);
+    fillLight.setSpecularColor(ofFloatColor(0, 1, 0));
+    fillLight.rotate(-90, ofVec3f(1, 0, 0));
+    //fillLight.rotate(-90, ofVec3f(0, 1, 0));
+    fillLight.setPosition(pos.x,pos.y + 10,pos.z);
     
 }
 
@@ -157,8 +144,8 @@ void ofApp::update() {
     
     ofVec3f pos = lander.getPosition();
     keyLight.setPosition(pos.x,pos.y - 100,pos.z);
-    fillLight.setPosition(pos.x,pos.y,pos.z);
-    fillLight2.setPosition(pos.x,pos.y,pos.z);
+    fillLight.setPosition(pos.x,pos.y + 40,pos.z);
+    //fillLight2.setPosition(pos.x,pos.y,pos.z);
     
     
     thrustEmitter->update();
@@ -225,14 +212,14 @@ void ofApp::update() {
     {
         lmAngle = lmAngle - 0.75;
         fillLight.rotate(-0.75, ofVec3f(0, 1, 0));
-        fillLight2.rotate(-0.75, ofVec3f(0, 1, 0));
+        //fillLight2.rotate(-0.75, ofVec3f(0, 1, 0));
         
     }
     if(rotateCCW)
     {
         lmAngle = lmAngle + 0.75;
         fillLight.rotate(0.75, ofVec3f(0, 1, 0));
-        fillLight2.rotate(0.75, ofVec3f(0, 1, 0));
+        //fillLight2.rotate(0.75, ofVec3f(0, 1, 0));
     }
     if(rotateCW || rotateCCW)
         lander.setRotation(0, lmAngle, 0, 1, 0);
