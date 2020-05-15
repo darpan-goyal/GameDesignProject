@@ -97,8 +97,7 @@ void ofApp::setup(){
     lmAngle = 0;
     headingVector = glm::vec3(0, 0, 0);
     
-    // setup LEM
-    //
+    // Setup LEM
     lunarModel = new Particle();
     lunarModelSys = new ParticleSystem();
     
@@ -155,9 +154,24 @@ void ofApp::setup(){
     explosions->setEmitterType(RadialEmitter);
     explosions->setParticleRadius(0.02);
     explosions->setLifespan(0.8);
-    //explosions->setLifespanRange(ofVec2f(0.01, 0.05));
     explosions->setGroupSize(200);
-    //explosions->randomLife = true;
+    
+    //Landing Area Setup
+    landAreaWidth = 30;
+    landAreaHeight = 30;
+    landAreaCoords.push_back(ofVec3f(100.0, -0.5, -131.0));
+    landAreaCoords.push_back(ofVec3f(-150, -0.5, 84.0));
+    landAreaCoords.push_back(ofVec3f(89.0, -0.5, 92.0));
+    
+    for(int i = 0; i < landAreaCoords.size(); i++) {
+        ofPolyline landingSquare;
+        landingSquare.addVertex(landAreaCoords[i]);
+        landingSquare.addVertex(ofVec3f(landAreaCoords[i].x, landAreaCoords[i].y, landAreaCoords[i].z + landAreaWidth));
+        landingSquare.addVertex(ofVec3f(landAreaCoords[i].x + landAreaHeight, landAreaCoords[i].y, landAreaCoords[i].z + landAreaWidth));
+        landingSquare.addVertex(ofVec3f(landAreaCoords[i].x + landAreaHeight, landAreaCoords[i].y, landAreaCoords[i].z));
+        landingSquare.addVertex(landAreaCoords[i]);
+        landAreaPolys.push_back(landingSquare);
+    }
 }
 
 // Load vertex buffer in preparation for rendering
@@ -237,6 +251,10 @@ void ofApp::update() {
                             ofVec3f norm = ofVec3f(0, 1, 0);
                             ofVec3f impForce = (restitution + 1.0) * ((-landerVel.dot(norm)) * norm);
                             lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                            if(checkInsideLandingAreas(lunarModelSys->particles[0].position))
+                                cout << "Landed in a landing area: " << endl;
+                            else
+                                cout << "Landed outside landing area: " << endl;
                             landerCollide = false;
                             explosions->start();
                             cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
@@ -272,6 +290,19 @@ void ofApp::update() {
     if(rotateCW || rotateCCW)
         lander.setRotation(0, lmAngle, 0, 1, 0);
 }
+
+bool ofApp::checkInsideLandingAreas(ofVec3f landerPos) {
+    bool insideLA = false;
+    for(int i = 0; i < landAreaCoords.size(); i++) {
+        if(landerPos.x >= landAreaCoords[i].x && landerPos.x <= landAreaCoords[i].x + landAreaHeight &&
+           landerPos.z >= landAreaCoords[i].z && landerPos.z <= landAreaCoords[i].z + landAreaWidth) {
+            return true;
+        }
+    }
+    return insideLA;
+}
+
+
 //--------------------------------------------------------------
 void ofApp::draw(){
     // Drawing background image
@@ -337,8 +368,23 @@ void ofApp::draw(){
 		ofSetColor(ofColor::red);
 		ofDrawSphere(selectedPoint, 2.0);
 	}
-	
-	ofNoFill();
+    
+    // Draw the landing regions
+    ofNoFill();
+    ofSetColor(0, 230, 0);
+    for(int i = 0; i < landAreaPolys.size(); i++) {
+        landAreaPolys[i].draw();
+        for(int j = 0; j < landAreaPolys[i].getVertices().size() -1; j++) {
+            ofDrawSphere(landAreaPolys[i].getVertices()[j], 0.7);
+        }
+    }
+    /*
+    lineOne.draw();
+    for(int i = 0; i < lineOne.getVertices().size() -1; i++) {
+        ofDrawSphere(lineOne.getVertices()[i], 0.5);
+    }
+     */
+
 	ofSetColor(ofColor::white);
 
 	// debug - check first node to make sure bbox is correct
@@ -486,12 +532,12 @@ void ofApp::keyPressed(int key) {
     case 'w':     // spacecraft thrust UP
         tForce->applied = false;
         thrustEmitter->start();
-        tForce->set(glm::vec3(0, 0.5, 0));
+        tForce->set(glm::vec3(0, 1.5, 0));
         break;
     case 's':     // spacefraft thrust DOWN
         tForce->applied = false;
         thrustEmitter->start();
-        tForce->set(glm::vec3(0, -0.5, 0));
+        tForce->set(glm::vec3(0, -1.5, 0));
         break;
 	case OF_KEY_ALT:
 		cam.enableMouseInput();
@@ -505,25 +551,25 @@ void ofApp::keyPressed(int key) {
 	case OF_KEY_DEL:
 		break;
     case OF_KEY_UP:    // move forward
-        headingVector = glm::vec3(0, 0, -1);
+        headingVector = glm::vec3(0, 0, -5);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
         tForce->applied = false;
         break;
     case OF_KEY_DOWN:   // move backward
-        headingVector = glm::vec3(0, 0, 1);
+        headingVector = glm::vec3(0, 0, 5);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
         tForce->applied = false;
         break;
     case OF_KEY_LEFT:   // move left
-        headingVector = glm::vec3(-1, 0, 0);
+        headingVector = glm::vec3(-5, 0, 0);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
         tForce->applied = false;
         break;
     case OF_KEY_RIGHT:   // move right
-        headingVector = glm::vec3(1, 0, 0);
+        headingVector = glm::vec3(5, 0, 0);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
         tForce->applied = false;
@@ -599,12 +645,8 @@ void ofApp::keyReleased(int key) {
 	}
 }
 
-
-
 //--------------------------------------------------------------
 void ofApp::mouseMoved(int x, int y ){
-
-	
 
 }
 
@@ -639,7 +681,6 @@ void ofApp::mousePressed(int x, int y, int button) {
         }
     }
     /* CODE: Testing intersection with surface when mouse is clicked on.
-
     TreeNode localNode;
     
     glm::vec3 p = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
@@ -659,6 +700,7 @@ void ofApp::mousePressed(int x, int y, int button) {
     else
         cout << "The surface wasn't clicked on." << endl;
     */
+
 
 }
 
@@ -807,17 +849,17 @@ void ofApp::initLightingAndMaterials() {
 	{ GL_TRUE };
 
 
-//	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-//	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-//	glLightfv(GL_LIGHT0, GL_POSITION, position);
-//
-//	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-//	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-//	glLightfv(GL_LIGHT1, GL_POSITION, position);
-//
-//
-//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-//	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+	glLightfv(GL_LIGHT0, GL_POSITION, position);
+
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+	glLightfv(GL_LIGHT1, GL_POSITION, position);
+
+
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
 
 //	glEnable(GL_LIGHTING);
 //	glEnable(GL_LIGHT0);

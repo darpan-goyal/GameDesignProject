@@ -110,4 +110,13 @@ class ofApp : public ofBaseApp{
         void loadVbo();
     
         ParticleEmitter *explosions;
+        
+        //Landing Area
+        float landAreaWidth;
+        float landAreaHeight;
+        vector<ofVec3f> landAreaCoords;
+        vector<ofPolyline> landAreaPolys;
+        bool checkInsideLandingAreas(ofVec3f landerPos);
+    
+    
 };
