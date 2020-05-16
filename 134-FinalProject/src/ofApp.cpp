@@ -92,7 +92,6 @@ void ofApp::setup(){
         //lander.setScale(.5, .5, .5);
         //lander.setRotation(0, -180, 1, 0, 0);
         lander.setPosition(0, 0, 0);
-
         bLanderLoaded = true;
     }
     else {
@@ -115,6 +114,7 @@ void ofApp::setup(){
     tForce->applied = true;
     lunarModelSys->addForce(tForce);
     lunarModelSys->addForce(new TurbulenceForce(glm::vec3(-0.3, -0.3, -0.3), glm::vec3(0.3, 0.3, 0.3)));
+    lunarModelSys->addForce(new GravityForce(ofVec3f(-0.3)));
     
     thrustEmitter = new ParticleEmitter();
     thrustEmitter->type = DiscEmitter;
@@ -182,6 +182,10 @@ void ofApp::setup(){
     landedAreas.push_back(false);
     landedAreas.push_back(false);
     landedAreas.push_back(false);
+    
+    ofTrueTypeFont::setGlobalDpi(72);
+    verdana44.load("verdana.ttf", 44, true, true);
+    verdana22.load("verdana.ttf", 22, true, true);
 }
 
 // Load vertex buffer in preparation for rendering
@@ -214,12 +218,10 @@ void ofApp::update() {
     fillLight.setPosition(pos.x,pos.y + 40,pos.z);
     //fillLight2.setPosition(pos.x,pos.y,pos.z);
     
-    
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
     
     explosions->update();
-    
     explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
     
     if(bLanderLoaded) {
@@ -257,7 +259,7 @@ void ofApp::update() {
                     for(Vector3 boxPoint : bboxPoints) {
                         octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints);
                         if(contactPoints.size() > 0) {
-                            float restitution = 1.0;
+                            float restitution = 1;
                             ofVec3f norm = ofVec3f(0, 1, 0);
                             ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
                             lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
@@ -473,6 +475,12 @@ void ofApp::draw(){
         // set back the depth mask
         //
         glDepthMask(GL_TRUE);
+    }
+    
+    if(gameOver) {
+        ofSetColor(255, 0, 0);
+        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2 - 40, ofGetWindowHeight() / 2 - 30);
+        verdana22.drawString("Score:" + std::to_string(gameScore), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2);
     }
     
     // Midterm Code

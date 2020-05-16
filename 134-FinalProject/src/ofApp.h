@@ -128,5 +128,7 @@ class ofApp : public ofBaseApp{
         
         bool gameOver = false;
         float gameScore = 0;
+        ofTrueTypeFont verdana44;
+        ofTrueTypeFont verdana22;
     
 };
