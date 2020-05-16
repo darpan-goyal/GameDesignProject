@@ -132,6 +132,7 @@ class ofApp : public ofBaseApp{
         bool checkGameWon();
         ofTrueTypeFont verdana44;
         ofTrueTypeFont verdana22;
+        ofTrueTypeFont verdana16;
         float fuel = 100;
         float health = 100;
     

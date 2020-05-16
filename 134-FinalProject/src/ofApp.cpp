@@ -1,16 +1,15 @@
 //  Student Name:   Sivam Agarwalla, Darpran Goyal
-//  Date: <date of last version>
-
+//  Lunar Landing Game Final
+//  Date: 5/15/2020
 
 #include "ofApp.h"
 #include "Util.h"
 #include <glm/gtx/intersect.hpp>
 
-
 //--------------------------------------------------------------
 // setup scene, lighting, state and load geometry
 //
-void ofApp::setup(){
+void ofApp::setup() {
 
 	bWireframe = false;
 	bDisplayPoints = false;
@@ -18,7 +17,6 @@ void ofApp::setup(){
 	bCtrlKeyDown = false;
 	bLanderLoaded = false;
 	bTerrainSelected = true;
-    //	ofSetWindowShape(1024, 768);
     
 	cam.setDistance(10);
 	cam.setNearClip(.1);
@@ -32,12 +30,13 @@ void ofApp::setup(){
     // Loading a background image
     bBackgroundLoaded = backgroundImage.load("images/starfield-purple1.jpg");
     
+    // Loading sounds for background and thruster (Darpan)
     bgSound.load("sounds/space.wav");
-    
     thrust.load("sounds/rocket-thrust-01.wav");
     bgSound.setVolume(0.3);
     bgSound.play();
 
+    // Setting camears for top-down views and tracing camera (Sivam)
 	top.setNearClip(.1);
 	top.setFov(80);
     
@@ -52,7 +51,7 @@ void ofApp::setup(){
 
 	boundingBox = meshBounds(terrain.getMesh(0));
     
-    // Texture loading
+    // Texture loading Sivam
     ofDisableArbTex();     // disable rectangular textures
     
     // Load Textures
@@ -71,22 +70,17 @@ void ofApp::setup(){
 	// create KdTree for terrain
 	//
     float timeBefore = ofGetElapsedTimef();
-	//kdtree.create(terrain.getMesh(0), 40);
     octree.create(terrain.getMesh(0), 8);
     float timeAfter = ofGetElapsedTimef();
     cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
     gui.add(drawLevel.setup("Draw Level", 1, 1, 7));
-    //gui.add(camFOV.setup("FOV", 65.5, 0, 100));
-    //gui.add(camNC.setup("Near Clip", .1, 0, 10));
     
     // Midterm Code
     
     if (lander.loadModel("geo/rocket2.obj")) {
         lander.setScaleNormalization(false);
-        //lander.setScale(.5, .5, .5);
-        //lander.setRotation(0, -180, 1, 0, 0);
         lander.setPosition(0, 15, 0);
         bLanderLoaded = true;
     }
@@ -126,7 +120,7 @@ void ofApp::setup(){
     //
     initLightingAndMaterials();
     
-    
+    // Setitng up 3D explosion (Darpan)
     explosions = new ParticleEmitter();
     explosions->type = RadialEmitter;
     explosions->particleColor = ofColor::yellow;
@@ -138,7 +132,7 @@ void ofApp::setup(){
     explosions->setLifespan(0.8);
     explosions->setGroupSize(200);
     
-    //Landing Area Setup
+    //Landing Area Setup (Sivam)
     landAreaWidth = 30;
     landAreaHeight = 30;
     landAreaCoords.push_back(ofVec3f(100.0, -0.5, -131.0));
@@ -162,6 +156,7 @@ void ofApp::setup(){
     ofTrueTypeFont::setGlobalDpi(72);
     verdana44.load("verdana.ttf", 44, true, true);
     verdana22.load("verdana.ttf", 22, true, true);
+    verdana16.load("verdana.ttf", 16, true, true);
 }
 
 // Load vertex buffer in preparation for rendering
@@ -193,86 +188,79 @@ void ofApp::update() {
     explosions->update();
     explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
     
+    // If the game isn't over, or the game has not been won, run the update method code
     if(!(gameOver || gameWon)) {
-    lunarModelSys->update();
-    lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
-    
-    //keyLight.setPosition(pos.x,pos.y - 100,pos.z);
-    landerSpotlight.setPosition(pos.x,pos.y + 40,pos.z);
-    //fillLight2.setPosition(pos.x,pos.y,pos.z);
-    
-    thrustEmitter->update();
-    thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
-    
-    if(bLanderLoaded) {
-        // Altitude Detection
-        Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
-        Vector3 direction = Vector3(0, -1, 0);
-        Ray altDetect = Ray(origin, direction);
-        TreeNode localNode;
+        // Update the lander position, the lights, and the thrust emitter
+        lunarModelSys->update();
+        lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
         
-        if(octree.intersect(altDetect, octree.root, localNode)) {
-            landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
-        }
+        landerSpotlight.setPosition(pos.x,pos.y + 40,pos.z);
         
-        // Collision Detection
-        ofVec3f landerVel = lunarModelSys->particles[0].velocity;
+        thrustEmitter->update();
+        thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
         
-        if(landerVel.y < -0.03) {
-            float stepSize = ofGetFrameRate();
-            ofVec3f distancePerFrame = -landerVel + (1.0 / stepSize);
+        // If the lander is loaded, check for altitude and collision detection
+        if(bLanderLoaded) {
+            // Altitude Detection
+            Vector3 origin = Vector3(lander.getPosition().x, lander.getPosition().y, lander.getPosition().z);
+            Vector3 direction = Vector3(0, -1, 0);
+            Ray altDetect = Ray(origin, direction);
+            TreeNode localNode;
             
-            if(distancePerFrame.y > landerAlt && landerAlt <= 0.1) {
-                landerCollide = true;
-                vector<Vector3> bboxPoints(4);
-                Vector3 boxMin = landerBounds.parameters[0];
-                Vector3 boxMax = landerBounds.parameters[1];
-                Vector3 boxSize = boxMax - boxMin;
-                bboxPoints.push_back(boxMin);
-                bboxPoints.push_back(Vector3(boxMin.x() + boxSize.x(), boxMin.y(), boxMin.z()));
-                bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y() + boxSize.y(), boxMin.z()));
-                bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y(), boxMin.z() + boxSize.z()));
+            if(octree.intersect(altDetect, octree.root, localNode)) {
+                landerAlt = lunarModelSys->particles[0].position.y - localNode.box.center().y();
+            }
+            
+            // Collision Detection
+            ofVec3f landerVel = lunarModelSys->particles[0].velocity;
+            
+            if(landerVel.y < -0.03) {
+                float stepSize = ofGetFrameRate();
+                ofVec3f distancePerFrame = -landerVel + (1.0 / stepSize);
                 
-                vector<Vector3> contactPoints;
-                
-                if(landerCollide) {
-                    for(Vector3 boxPoint : bboxPoints) {
-                        octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints);
-                        if(contactPoints.size() > 0) {
-                            float restitution = 1;
-                            ofVec3f norm = ofVec3f(0, 1, 0);
-                            ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
-                            lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
-                            
-                            float scoreReturned = checkLandingVelocity(landerVel.y);
-                            bool insideLA = checkInsideLandingAreas(lunarModelSys->particles[0].position);
-                            
-                            if(insideLA && scoreReturned != 0) {
-                                cout << "Landed in a landing area!" << endl;
-                                gameScore += scoreReturned;
-                                fuel += 50.0;
-                                cout << "Player score: " << scoreReturned << endl;
+                if(distancePerFrame.y > landerAlt && landerAlt <= 0.1) {
+                    landerCollide = true;
+                    vector<Vector3> bboxPoints(4);
+                    Vector3 boxMin = landerBounds.parameters[0];
+                    Vector3 boxMax = landerBounds.parameters[1];
+                    Vector3 boxSize = boxMax - boxMin;
+                    bboxPoints.push_back(boxMin);
+                    bboxPoints.push_back(Vector3(boxMin.x() + boxSize.x(), boxMin.y(), boxMin.z()));
+                    bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y() + boxSize.y(), boxMin.z()));
+                    bboxPoints.push_back(Vector3(boxMin.x(), boxMin.y(), boxMin.z() + boxSize.z()));
+                    
+                    vector<Vector3> contactPoints;
+                    
+                    if(landerCollide) {
+                        for(Vector3 boxPoint : bboxPoints) {
+                            octree.checkSurfaceCollision(boxPoint, octree.root, contactPoints);
+                            if(contactPoints.size() > 0) {
+                                float restitution = 1;
+                                ofVec3f norm = ofVec3f(0, 1, 0);
+                                ofVec3f impForce = (restitution + 0.5) * ((-landerVel.dot(norm)) * norm);
+                                lunarModelSys->particles[0].forces += ofGetFrameRate() * impForce;
+                                
+                                float scoreReturned = checkLandingVelocity(landerVel.y);
+                                bool insideLA = checkInsideLandingAreas(lunarModelSys->particles[0].position);
+                                
+                                if(insideLA && scoreReturned != 0) {
+                                    gameScore += scoreReturned;
+                                    fuel += 50.0;
+                                }
+                                else {
+                                    explosions->start();
+                                    health -= 50;
+                                }
+                                landerCollide = false;
+                                break;
                             }
-                            else {
-                                if(insideLA && scoreReturned == 0)
-                                    cout << "Landed inside landing area, but impact too hard!" << endl;
-                                else
-                                    cout << "Landed outside landing area!" << endl;
-                                explosions->start();
-                                health -= 50;
-                                //gameOver = true;
-                            }
-                            landerCollide = false;
-                            cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
-                            break;
                         }
                     }
                 }
             }
+            else
+                landerCollide = false;
         }
-        else
-            landerCollide = false;
-    }
     }
     
     // Update Cameras
@@ -285,14 +273,12 @@ void ofApp::update() {
     {
         lmAngle = lmAngle - 0.75;
         landerSpotlight.rotate(-0.75, ofVec3f(0, 1, 0));
-        //fillLight2.rotate(-0.75, ofVec3f(0, 1, 0));
         
     }
     if(rotateCCW)
     {
         lmAngle = lmAngle + 0.75;
         landerSpotlight.rotate(0.75, ofVec3f(0, 1, 0));
-        //fillLight2.rotate(0.75, ofVec3f(0, 1, 0));
     }
     if(rotateCW || rotateCCW)
         lander.setRotation(0, lmAngle, 0, 1, 0);
@@ -326,7 +312,6 @@ float ofApp::checkLandingVelocity(float landingVel) {
         return (100.0 - (landingVel * 100));
     }
 }
-
 
 //--------------------------------------------------------------
 void ofApp::draw(){
@@ -417,20 +402,9 @@ void ofApp::draw(){
 	//
     octree.draw(octree.root, drawLevel, 0);
     
-    /* CODE: Draws leaf nodes and then prints out average points in each leaf.
-             Used for testing.
-    
-    octree.drawLeafNodes(octree.root);
-    if(printOnce) {
-        octree.averagePointsInLeafs();
-        printOnce = false;
-    }
-     */
-    
     explosions->draw();
 	theCam->end();
     ofDisableDepthTest();
-    gui.draw();
     
     if(thrustEmitter->started) {
         loadVbo();
@@ -478,6 +452,13 @@ void ofApp::draw(){
         verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
     }
     
+    if(!gameWon && !gameOver) {
+        verdana16.drawString("Score: " + std::to_string((int) gameScore), 10, ofGetWindowHeight() - 45);
+        verdana16.drawString("Fuel: " + std::to_string((int) fuel), 10, ofGetWindowHeight() - 30);
+        verdana16.drawString("Health: " + std::to_string((int) health), 10, ofGetWindowHeight() - 15);
+        
+    }
+    
     // Midterm Code
     string str;
     str += "Frame Rate: " + std::to_string(ofGetFrameRate());
@@ -485,22 +466,9 @@ void ofApp::draw(){
     ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
 
     string str2;
-    //str2 += "Altitide (AGL): " + std::to_string(lander.getPosition().y);
     str2 += "Altitide (AGL): " + std::to_string(landerAlt);
     ofSetColor(ofColor::white);
     ofDrawBitmapString(str2, 5, 15);
-    
-    string str3;
-    str3 += "Fuel: " + std::to_string(fuel);
-    ofSetColor(ofColor::white);
-    ofDrawBitmapString(str3, ofGetWindowWidth() - 170, 30);
-    ofSetVerticalSync(true);
-    
-    string str4;
-    str4 += "Health: " + std::to_string(health);
-    ofSetColor(ofColor::white);
-    ofDrawBitmapString(str4, ofGetWindowWidth() - 170, 45);
-    ofSetVerticalSync(true);
 }
 
 // 
@@ -547,8 +515,6 @@ void ofApp::keyPressed(int key) {
 	case 'h':
 		break;
 	case 'r':
-        //cam.lookAt(lunarModelSys->particles[0].position);
-        //cam.setPosition(lunarModelSys->particles[0].position + ofVec3f(50, 50, 50));
         cam.setDistance(15);
         cam.setTarget(lunarModelSys->particles[0].position);
 		break;
@@ -743,28 +709,6 @@ void ofApp::mousePressed(int x, int y, int button) {
             bLanderSelected = false;
         }
     }
-    /* CODE: Testing intersection with surface when mouse is clicked on.
-    TreeNode localNode;
-    
-    glm::vec3 p = cam.screenToWorld(glm::vec3(mouseX, mouseY, 0));
-    glm::vec3 rayDir = glm::normalize(p - theCam->getPosition());
-    float timeBefore = ofGetElapsedTimef();
-    float timeAfter;
-    
-    if(octree.intersect(Ray(Vector3(p.x, p.y, p.z), Vector3(rayDir.x, rayDir.y, rayDir.z)), octree.root, localNode)) {
-        timeAfter = ofGetElapsedTimef();
-        cout << "Intersect detection time in ms: " << (timeAfter - timeBefore) << endl;
-        Vector3 selectedBoxCenter = localNode.box.center();
-        selectedPoint = ofVec3f(selectedBoxCenter.x(), selectedBoxCenter.y(), selectedBoxCenter.z());
-        cout << "Selected points coordinators: " << selectedPoint << endl;
-        
-        bPointSelected = true;
-    }
-    else
-        cout << "The surface wasn't clicked on." << endl;
-    */
-
-
 }
 
 
