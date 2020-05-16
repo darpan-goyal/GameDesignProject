@@ -47,10 +47,6 @@ void ofApp::setup(){
 
 	theCam = &cam;
 
-	// setup rudimentary lighting 
-	//
-	initLightingAndMaterials();
-
     terrain.loadModel("geo/moon-houdini.obj");
 	terrain.setScaleNormalization(false);
 
@@ -126,30 +122,10 @@ void ofApp::setup(){
     thrustEmitter->particleRadius = 5;
     thrustEmitter->groupSize = 100;
     
-    keyLight.setup();
-    keyLight.enable();
-    keyLight.setAreaLight(2, 2);
-    keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
-    keyLight.setDiffuseColor(ofFloatColor(1, 1, 1));
-    keyLight.setSpecularColor(ofFloatColor(1, 0, 0));
-
-    //keyLight.rotate(45, ofVec3f(0, 1, 0));
-    keyLight.rotate(180, ofVec3f(1, 0, 0));
-    keyLight.setPosition(lander.getPosition());
+    // setup rudimentary lighting
+    //
+    initLightingAndMaterials();
     
-    ofVec3f pos = lander.getPosition();
-    fillLight.setup();
-    fillLight.enable();
-    fillLight.setSpotlight();
-    fillLight.setScale(.1);
-    fillLight.setSpotlightCutOff(200);
-    fillLight.setAttenuation(2, .00001, .00001);
-    fillLight.setAmbientColor(ofFloatColor(0.1, 0, 0));
-    fillLight.setDiffuseColor(ofFloatColor(1, 1, 1));
-    fillLight.setSpecularColor(ofFloatColor(0, 1, 0));
-    fillLight.rotate(-90, ofVec3f(1, 0, 0));
-    //fillLight.rotate(-90, ofVec3f(0, 1, 0));
-    fillLight.setPosition(pos.x,pos.y + 10,pos.z);
     
     explosions = new ParticleEmitter();
     explosions->type = RadialEmitter;
@@ -211,7 +187,7 @@ void ofApp::loadVbo() {
 void ofApp::update() {
     gameWon = checkGameWon();
     
-    if(fuel <= 0) gameOver = true;
+    if(fuel <= 0 || health<=0) gameOver = true;
     
     ofVec3f pos = lander.getPosition();
     explosions->update();
@@ -221,8 +197,8 @@ void ofApp::update() {
     lunarModelSys->update();
     lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
     
-    keyLight.setPosition(pos.x,pos.y - 100,pos.z);
-    fillLight.setPosition(pos.x,pos.y + 40,pos.z);
+    //keyLight.setPosition(pos.x,pos.y - 100,pos.z);
+    landerSpotlight.setPosition(pos.x,pos.y + 40,pos.z);
     //fillLight2.setPosition(pos.x,pos.y,pos.z);
     
     thrustEmitter->update();
@@ -283,7 +259,8 @@ void ofApp::update() {
                                 else
                                     cout << "Landed outside landing area!" << endl;
                                 explosions->start();
-                                gameOver = true;
+                                health -= 50;
+                                //gameOver = true;
                             }
                             landerCollide = false;
                             cout << "IFA, Lander y vel:" << lunarModelSys->particles[0].velocity.y << endl;
@@ -307,14 +284,14 @@ void ofApp::update() {
     if(rotateCW)
     {
         lmAngle = lmAngle - 0.75;
-        fillLight.rotate(-0.75, ofVec3f(0, 1, 0));
+        landerSpotlight.rotate(-0.75, ofVec3f(0, 1, 0));
         //fillLight2.rotate(-0.75, ofVec3f(0, 1, 0));
         
     }
     if(rotateCCW)
     {
         lmAngle = lmAngle + 0.75;
-        fillLight.rotate(0.75, ofVec3f(0, 1, 0));
+        landerSpotlight.rotate(0.75, ofVec3f(0, 1, 0));
         //fillLight2.rotate(0.75, ofVec3f(0, 1, 0));
     }
     if(rotateCW || rotateCCW)
@@ -343,7 +320,6 @@ bool ofApp::checkInsideLandingAreas(ofVec3f landerPos) {
 float ofApp::checkLandingVelocity(float landingVel) {
     landingVel = -landingVel;
     if(landingVel >= 1.0) {
-        gameOver = true;
         return 0;
     }
     else {
@@ -420,8 +396,13 @@ void ofApp::draw(){
     ofNoFill();
     ofSetColor(0, 230, 0);
     for(int i = 0; i < landAreaPolys.size(); i++) {
-        if(landedAreas[i])
+        if(landedAreas[i]){
              ofSetColor(255, 0, 0);
+            ofVec3f where = landAreaCoords[i];
+            //ofVec3f where = lander.getPosition();
+            lights[i].setPosition(where.x + landAreaWidth/2,where.y+40,where.z + landAreaWidth/2);
+            lights[i].enable();
+        }
         else
              ofSetColor(0, 230, 0);
         landAreaPolys[i].draw();
@@ -513,6 +494,12 @@ void ofApp::draw(){
     str3 += "Fuel: " + std::to_string(fuel);
     ofSetColor(ofColor::white);
     ofDrawBitmapString(str3, ofGetWindowWidth() - 170, 30);
+    ofSetVerticalSync(true);
+    
+    string str4;
+    str4 += "Health: " + std::to_string(health);
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString(str4, ofGetWindowWidth() - 170, 45);
     ofSetVerticalSync(true);
 }
 
@@ -925,22 +912,88 @@ void ofApp::initLightingAndMaterials() {
 	{ GL_TRUE };
 
 
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT0, GL_POSITION, position);
+//	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
+//	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+//	glLightfv(GL_LIGHT0, GL_POSITION, position);
+//
+//	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
+//	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+//	glLightfv(GL_LIGHT1, GL_POSITION, position);
+//
+//
+//	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+//	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+//
+//	glEnable(GL_LIGHTING);
+//	glEnable(GL_LIGHT0);
+//	glEnable(GL_LIGHT1);
+//	glShadeModel(GL_SMOOTH);
+    
+    ofVec3f pos = lander.getPosition();
+    keyLight.setup();
+    keyLight.enable();
+    keyLight.setAreaLight(2, 2);
+    keyLight.setAmbientColor(ofFloatColor(0.1, 0.1, 0.1));
+    keyLight.setDiffuseColor(ofFloatColor(1, 1, 1));
+    keyLight.setSpecularColor(ofFloatColor(1, 0, 0));
 
-	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
-	glLightfv(GL_LIGHT1, GL_POSITION, position);
-
-
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glShadeModel(GL_SMOOTH);
+    //keyLight.rotate(45, ofVec3f(0, 1, 0));
+    keyLight.rotate(180, ofVec3f(1, 0, 0));
+    keyLight.setPosition(0, -100, 0);
+    
+    
+    landerSpotlight.setup();
+    landerSpotlight.enable();
+    landerSpotlight.setSpotlight();
+    landerSpotlight.setScale(.1);
+    landerSpotlight.setSpotlightCutOff(200);
+    landerSpotlight.setAttenuation(2, .00001, .00001);
+    landerSpotlight.setAmbientColor(ofFloatColor(0.1, 0, 0));
+    landerSpotlight.setDiffuseColor(ofFloatColor(1, 1, 1));
+    landerSpotlight.setSpecularColor(ofFloatColor(0, 1, 0));
+    landerSpotlight.rotate(-90, ofVec3f(1, 0, 0));
+    //fillLight.rotate(-90, ofVec3f(0, 1, 0));
+    landerSpotlight.setPosition(pos.x,pos.y + 10,pos.z);
+    
+    landingLight1.setup();
+    //landingLight1.enable();
+    landingLight1.setSpotlight();
+    landingLight1.setScale(.1);
+    landingLight1.setSpotlightCutOff(200);
+    landingLight1.setAttenuation(2, .00001, .00001);
+    landingLight1.setAmbientColor(ofFloatColor(0.1, 0, 0));
+    landingLight1.setDiffuseColor(ofFloatColor(1, 1, 1));
+    landingLight1.setSpecularColor(ofFloatColor(0, 1, 0));
+    landingLight1.rotate(-90, ofVec3f(1, 0, 0));
+    //fillLight.rotate(-90, ofVec3f(0, 1, 0));
+    //landingLight1.setPosition(pos.x,pos.y + 10,pos.z);
+    
+    lights.push_back(landingLight1);
+    landingLight2.setup();
+    //landingLight2.enable();
+    landingLight2.setSpotlight();
+    landingLight2.setScale(.1);
+    landingLight2.setSpotlightCutOff(200);
+    landingLight2.setAttenuation(2, .00001, .00001);
+    landingLight2.setAmbientColor(ofFloatColor(0.1, 0, 0));
+    landingLight2.setDiffuseColor(ofFloatColor(1, 1, 1));
+    landingLight2.setSpecularColor(ofFloatColor(0, 1, 0));
+    landingLight2.rotate(-90, ofVec3f(1, 0, 0));
+    
+    landingLight3.setup();
+    //landingLight3.enable();
+    landingLight3.setSpotlight();
+    landingLight3.setScale(.1);
+    landingLight3.setSpotlightCutOff(200);
+    landingLight3.setAttenuation(2, .00001, .00001);
+    landingLight3.setAmbientColor(ofFloatColor(0.1, 0, 0));
+    landingLight3.setDiffuseColor(ofFloatColor(1, 1, 1));
+    landingLight3.setSpecularColor(ofFloatColor(0, 1, 0));
+    landingLight3.rotate(-90, ofVec3f(1, 0, 0));
+    
+    lights.push_back(landingLight1);
+    lights.push_back(landingLight2);
+    lights.push_back(landingLight3);
 } 
 
 void ofApp::savePicture() {

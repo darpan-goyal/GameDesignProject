@@ -98,8 +98,8 @@ class ofApp : public ofBaseApp{
         float intersectTime = 0.0;
         float printVals = 0.0;
         bool landerCollide = false;
-        ofLight keyLight,fillLight,fillLight2;
-    
+        ofLight keyLight,landerSpotlight,landingLight1,landingLight2,landingLight3;
+        vector<ofLight> lights;
         // Textures
         ofTexture particleTex;
 
@@ -133,5 +133,6 @@ class ofApp : public ofBaseApp{
         ofTrueTypeFont verdana44;
         ofTrueTypeFont verdana22;
         float fuel = 100;
+        float health = 100;
     
 };
