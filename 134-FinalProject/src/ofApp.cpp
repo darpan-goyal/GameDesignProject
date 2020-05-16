@@ -91,7 +91,7 @@ void ofApp::setup(){
         lander.setScaleNormalization(false);
         //lander.setScale(.5, .5, .5);
         //lander.setRotation(0, -180, 1, 0, 0);
-        lander.setPosition(0, 0, 0);
+        lander.setPosition(0, 15, 0);
         bLanderLoaded = true;
     }
     else {
@@ -209,6 +209,7 @@ void ofApp::loadVbo() {
 // incrementally update scene (animation)
 //
 void ofApp::update() {
+    gameWon = checkGameWon();
     // Midterm Code
     lunarModelSys->update();
     lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
@@ -313,6 +314,14 @@ void ofApp::update() {
     }
     if(rotateCW || rotateCCW)
         lander.setRotation(0, lmAngle, 0, 1, 0);
+}
+
+bool ofApp::checkGameWon() {
+    for(int i = 0; i < landedAreas.size(); i++) {
+        if (!landedAreas[i])
+            return false;
+    }
+    return true;
 }
 
 bool ofApp::checkInsideLandingAreas(ofVec3f landerPos) {
@@ -479,8 +488,13 @@ void ofApp::draw(){
     
     if(gameOver) {
         ofSetColor(255, 0, 0);
-        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2 - 40, ofGetWindowHeight() / 2 - 30);
-        verdana22.drawString("Score:" + std::to_string(gameScore), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2);
+        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 30);
+        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 5);
+    }
+    if(gameWon) {
+        ofSetColor(0, 230, 0);
+        verdana44.drawString("LANDING COMPLETE!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 30);
+        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 5);
     }
     
     // Midterm Code
