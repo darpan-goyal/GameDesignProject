@@ -29,6 +29,7 @@ void ofApp::setup() {
     
     // Loading a background image
     bBackgroundLoaded = backgroundImage.load("images/starfield-purple1.jpg");
+    titleScreen.load("images/TitleScreen.png");
     
     // Loading sounds for background and thruster (Darpan)
     bgSound.load("sounds/space.wav");
@@ -180,6 +181,7 @@ void ofApp::loadVbo() {
 // incrementally update scene (animation)
 //
 void ofApp::update() {
+    if(!gameStarted) return;
     gameWon = checkGameWon();
     
     if(fuel <= 0 || health<=0) gameOver = true;
@@ -317,159 +319,171 @@ float ofApp::checkLandingVelocity(float landingVel) {
 //--------------------------------------------------------------
 void ofApp::draw(){
     // Drawing background image
-    if (bBackgroundLoaded) {
+    
+    if(!gameStarted) {
+        ofSetBackgroundColor(0, 0, 0);
         ofPushMatrix();
         ofDisableDepthTest();
-        ofSetColor(50, 50, 50);
-        ofScale(2, 2);
-        backgroundImage.draw(-200, -100);
+        titleScreen.draw(0, 0);
         ofEnableDepthTest();
         ofPopMatrix();
     }
     
-	theCam->begin();
-    
-	ofPushMatrix();
-	if (bWireframe) {                    // wireframe mode  (include axis)
-		ofDisableLighting();
-		ofSetColor(ofColor::slateGray);
-		terrain.drawWireframe();
-		if (bLanderLoaded) {
-			lander.drawWireframe();
-			if (!bTerrainSelected) drawAxis(lander.getPosition());
-		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-	}
-	else {
-		ofEnableLighting();              // shaded mode
-		terrain.drawFaces();
-        keyLight.draw();
-		if (bLanderLoaded) {
-			lander.drawFaces();
-			if (!bTerrainSelected) drawAxis(lander.getPosition());
-
-			ofVec3f min = lander.getSceneMin() + lander.getPosition();
-			ofVec3f max = lander.getSceneMax() + lander.getPosition();
-
-			Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
-
-			landerBounds = bounds;
-
-			// set color of bounding box based on selection status
-			//
-			if (bLanderSelected) ofSetColor(ofColor::red);
-			else ofSetColor(ofColor::white);
-
-			//drawBox(bounds);
-		}
-		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
-	}
-
-	if (bDisplayPoints) {
-		glPointSize(3);
-		ofSetColor(ofColor::green);
-		terrain.drawVertices();
-	}
-
-	// highlight selected point (draw sphere around selected point)
-	//
-	if (bPointSelected) {
-		ofSetColor(ofColor::red);
-		ofDrawSphere(selectedPoint, 2.0);
-	}
-    
-    // Draw the landing regions
-    ofNoFill();
-    ofSetColor(0, 230, 0);
-    for(int i = 0; i < landAreaPolys.size(); i++) {
-        if(landedAreas[i]){
-             ofSetColor(255, 0, 0);
-            ofVec3f where = landAreaCoords[i];
-            //ofVec3f where = lander.getPosition();
-            lights[i].setPosition(where.x + landAreaWidth/2,where.y+40,where.z + landAreaWidth/2);
-            lights[i].enable();
+    else {
+        if (bBackgroundLoaded) {
+            ofPushMatrix();
+            ofDisableDepthTest();
+            ofSetColor(50, 50, 50);
+            ofScale(2, 2);
+            backgroundImage.draw(-200, -100);
+            ofEnableDepthTest();
+            ofPopMatrix();
         }
-        else
-             ofSetColor(0, 230, 0);
-        landAreaPolys[i].draw();
-        for(int j = 0; j < landAreaPolys[i].getVertices().size() -1; j++) {
-            ofDrawSphere(landAreaPolys[i].getVertices()[j], 0.7);
-        }
-    }
-
-	ofSetColor(ofColor::white);
-
-	// debug - check first node to make sure bbox is correct
-	//
-    octree.draw(octree.root, drawLevel, 0);
     
-    explosions->draw();
-	theCam->end();
-    ofDisableDepthTest();
-    
-    if(thrustEmitter->started) {
-        loadVbo();
-        glDepthMask(GL_FALSE);
-
-        ofSetColor(255, 100, 90);
-
-        // this makes everything look glowy :)
-        //
-        ofEnableBlendMode(OF_BLENDMODE_ADD);
-        ofEnablePointSprites();
-
-        // begin drawing in the camera
-        shader.begin();
         theCam->begin();
-
-        // draw particle emitter here..
-        //emitter.draw();
-        particleTex.bind();
-        vbo.draw(GL_POINTS, 0, (int)thrustEmitter->sys->particles.size());
-        particleTex.unbind();
-
-        //  end drawing in the camera
-        //
-        theCam->end();
-        shader.end();
-
-        ofDisablePointSprites();
-        ofDisableBlendMode();
-        ofEnableAlphaBlending();
-
-        // set back the depth mask
-        //
-        glDepthMask(GL_TRUE);
-    }
-    
-    if(gameOver) {
-        ofSetColor(255, 0, 0);
-        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
-        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
-    }
-    if(gameWon) {
-        ofSetColor(0, 230, 0);
-        verdana44.drawString("LANDING COMPLETE!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
-        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
-    }
-    
-    if(!gameWon && !gameOver) {
-        verdana16.drawString("Score: " + std::to_string((int) gameScore), 10, ofGetWindowHeight() - 45);
-        verdana16.drawString("Fuel: " + std::to_string((int) fuel), 10, ofGetWindowHeight() - 30);
-        verdana16.drawString("Health: " + std::to_string((int) health), 10, ofGetWindowHeight() - 15);
         
-    }
-    
-    // Midterm Code
-    string str;
-    str += "Frame Rate: " + std::to_string(ofGetFrameRate());
-    ofSetColor(ofColor::white);
-    ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+        ofPushMatrix();
+        if (bWireframe) {                    // wireframe mode  (include axis)
+            ofDisableLighting();
+            ofSetColor(ofColor::slateGray);
+            terrain.drawWireframe();
+            if (bLanderLoaded) {
+                lander.drawWireframe();
+                if (!bTerrainSelected) drawAxis(lander.getPosition());
+            }
+            if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+        }
+        else {
+            ofEnableLighting();              // shaded mode
+            terrain.drawFaces();
+            keyLight.draw();
+            if (bLanderLoaded) {
+                lander.drawFaces();
+                if (!bTerrainSelected) drawAxis(lander.getPosition());
 
-    string str2;
-    str2 += "Altitide (AGL): " + std::to_string(landerAlt);
-    ofSetColor(ofColor::white);
-    ofDrawBitmapString(str2, 5, 15);
+                ofVec3f min = lander.getSceneMin() + lander.getPosition();
+                ofVec3f max = lander.getSceneMax() + lander.getPosition();
+
+                Box bounds = Box(Vector3(min.x, min.y, min.z), Vector3(max.x, max.y, max.z));
+
+                landerBounds = bounds;
+
+                // set color of bounding box based on selection status
+                //
+                if (bLanderSelected) ofSetColor(ofColor::red);
+                else ofSetColor(ofColor::white);
+
+                //drawBox(bounds);
+            }
+            if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
+        }
+
+        if (bDisplayPoints) {
+            glPointSize(3);
+            ofSetColor(ofColor::green);
+            terrain.drawVertices();
+        }
+
+        // highlight selected point (draw sphere around selected point)
+        //
+        if (bPointSelected) {
+            ofSetColor(ofColor::red);
+            ofDrawSphere(selectedPoint, 2.0);
+        }
+        
+        // Draw the landing regions
+        ofNoFill();
+        ofSetColor(0, 230, 0);
+        for(int i = 0; i < landAreaPolys.size(); i++) {
+            if(landedAreas[i]){
+                 ofSetColor(255, 0, 0);
+                ofVec3f where = landAreaCoords[i];
+                //ofVec3f where = lander.getPosition();
+                lights[i].setPosition(where.x + landAreaWidth/2,where.y+40,where.z + landAreaWidth/2);
+                lights[i].enable();
+            }
+            else
+                 ofSetColor(0, 230, 0);
+            landAreaPolys[i].draw();
+            for(int j = 0; j < landAreaPolys[i].getVertices().size() -1; j++) {
+                ofDrawSphere(landAreaPolys[i].getVertices()[j], 0.7);
+            }
+        }
+
+        ofSetColor(ofColor::white);
+
+        // debug - check first node to make sure bbox is correct
+        //
+        octree.draw(octree.root, drawLevel, 0);
+        
+        explosions->draw();
+        theCam->end();
+        ofDisableDepthTest();
+        
+        if(thrustEmitter->started) {
+            loadVbo();
+            glDepthMask(GL_FALSE);
+
+            ofSetColor(255, 100, 90);
+
+            // this makes everything look glowy :)
+            //
+            ofEnableBlendMode(OF_BLENDMODE_ADD);
+            ofEnablePointSprites();
+
+            // begin drawing in the camera
+            shader.begin();
+            theCam->begin();
+
+            // draw particle emitter here..
+            //emitter.draw();
+            particleTex.bind();
+            vbo.draw(GL_POINTS, 0, (int)thrustEmitter->sys->particles.size());
+            particleTex.unbind();
+
+            //  end drawing in the camera
+            //
+            theCam->end();
+            shader.end();
+
+            ofDisablePointSprites();
+            ofDisableBlendMode();
+            ofEnableAlphaBlending();
+
+            // set back the depth mask
+            //
+            glDepthMask(GL_TRUE);
+        }
+        
+        if(gameOver) {
+            ofSetColor(255, 0, 0);
+            verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
+            verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
+        }
+        if(gameWon) {
+            ofSetColor(0, 230, 0);
+            verdana44.drawString("LANDING COMPLETE!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
+            verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
+        }
+        
+        if(!gameWon && !gameOver) {
+            verdana16.drawString("Score: " + std::to_string((int) gameScore), 10, ofGetWindowHeight() - 45);
+            verdana16.drawString("Fuel: " + std::to_string((int) fuel), 10, ofGetWindowHeight() - 30);
+            verdana16.drawString("Health: " + std::to_string((int) health), 10, ofGetWindowHeight() - 15);
+            
+        }
+        
+        // Midterm Code
+        string str;
+        str += "Frame Rate: " + std::to_string(ofGetFrameRate());
+        ofSetColor(ofColor::white);
+        ofDrawBitmapString(str, ofGetWindowWidth() - 170, 15);
+
+        string str2;
+        str2 += "Altitide (AGL): " + std::to_string(landerAlt);
+        ofSetColor(ofColor::white);
+        ofDrawBitmapString(str2, 5, 15);
+    }
 }
 
 // 
@@ -608,6 +622,9 @@ void ofApp::keyPressed(int key) {
 		break;
     case OF_KEY_F3:
         theCam = &traceCam;
+        break;
+    case ' ':
+        gameStarted = true;
         break;
 	default:
 		break;

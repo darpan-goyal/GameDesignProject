@@ -49,6 +49,7 @@ class ofApp : public ofBaseApp{
 		Box boundingBox;
 		Box landerBounds;
         ofImage backgroundImage;
+        ofImage titleScreen;
 	
 		bool bAltKeyDown;
 		bool bCtrlKeyDown;
@@ -135,5 +136,6 @@ class ofApp : public ofBaseApp{
         ofTrueTypeFont verdana16;
         float fuel = 100;
         float health = 100;
+        bool gameStarted = false;
     
 };
