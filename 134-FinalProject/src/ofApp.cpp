@@ -246,6 +246,7 @@ void ofApp::update() {
                                 if(insideLA && scoreReturned != 0) {
                                     gameScore += scoreReturned;
                                     fuel += 50.0;
+                                    if(fuel > 100) fuel = 100;
                                 }
                                 else {
                                     explosions->start();
@@ -359,7 +360,7 @@ void ofApp::draw(){
 			if (bLanderSelected) ofSetColor(ofColor::red);
 			else ofSetColor(ofColor::white);
 
-			drawBox(bounds);
+			//drawBox(bounds);
 		}
 		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
