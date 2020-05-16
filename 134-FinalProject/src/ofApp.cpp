@@ -212,20 +212,21 @@ void ofApp::update() {
     gameWon = checkGameWon();
     
     if(fuel <= 0) gameOver = true;
-    // Midterm Code
+    
+    ofVec3f pos = lander.getPosition();
+    explosions->update();
+    explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
+    
+    if(!(gameOver || gameWon)) {
     lunarModelSys->update();
     lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
     
-    ofVec3f pos = lander.getPosition();
     keyLight.setPosition(pos.x,pos.y - 100,pos.z);
     fillLight.setPosition(pos.x,pos.y + 40,pos.z);
     //fillLight2.setPosition(pos.x,pos.y,pos.z);
     
     thrustEmitter->update();
     thrustEmitter->setPosition(glm::vec3(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z));
-    
-    explosions->update();
-    explosions->setPosition(ofVec3f(pos.x,pos.y,pos.z));
     
     if(bLanderLoaded) {
         // Altitude Detection
@@ -273,7 +274,7 @@ void ofApp::update() {
                             if(insideLA && scoreReturned != 0) {
                                 cout << "Landed in a landing area!" << endl;
                                 gameScore += scoreReturned;
-                                fuel += 50;
+                                fuel += 50.0;
                                 cout << "Player score: " << scoreReturned << endl;
                             }
                             else {
@@ -294,6 +295,7 @@ void ofApp::update() {
         }
         else
             landerCollide = false;
+    }
     }
     
     // Update Cameras
@@ -329,10 +331,6 @@ bool ofApp::checkGameWon() {
 
 bool ofApp::checkInsideLandingAreas(ofVec3f landerPos) {
     for(int i = 0; i < landAreaCoords.size(); i++) {
-        if(landedAreas[i]) {
-            cout << "This area has already been landed on." << endl;
-            return false;
-        }
         if(landerPos.x >= landAreaCoords[i].x && landerPos.x <= landAreaCoords[i].x + landAreaHeight &&
            landerPos.z >= landAreaCoords[i].z && landerPos.z <= landAreaCoords[i].z + landAreaWidth) {
             landedAreas[i] = true;
@@ -404,7 +402,6 @@ void ofApp::draw(){
 		}
 		if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
 	}
-
 
 	if (bDisplayPoints) {
 		glPointSize(3);
@@ -491,13 +488,13 @@ void ofApp::draw(){
     
     if(gameOver) {
         ofSetColor(255, 0, 0);
-        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 30);
-        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 5);
+        verdana44.drawString("GAME OVER!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
+        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
     }
     if(gameWon) {
         ofSetColor(0, 230, 0);
-        verdana44.drawString("LANDING COMPLETE!", ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 30);
-        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2, ofGetWindowHeight() / 2 - 5);
+        verdana44.drawString("LANDING COMPLETE!", ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 30);
+        verdana22.drawString("Score:" + std::to_string(static_cast<int>(gameScore)), ofGetWindowWidth() / 2 - 60, ofGetWindowHeight() / 2 - 5);
     }
     
     // Midterm Code
