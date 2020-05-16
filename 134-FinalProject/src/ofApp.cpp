@@ -35,7 +35,7 @@ void ofApp::setup(){
     bgSound.load("sounds/space.wav");
     
     thrust.load("sounds/rocket-thrust-01.wav");
-    
+    bgSound.setVolume(0.3);
     bgSound.play();
 
 	top.setNearClip(.1);
@@ -106,7 +106,7 @@ void ofApp::setup(){
     lunarModel = new Particle();
     lunarModelSys = new ParticleSystem();
     
-    lunarModel->position = glm::vec3(0, 0, 0);
+    lunarModel->position = glm::vec3(0, 5, 0);
     lunarModel->radius = 0.25;
     lunarModel->lifespan = -1;
     lunarModelSys->add(*lunarModel);
@@ -210,6 +210,8 @@ void ofApp::loadVbo() {
 //
 void ofApp::update() {
     gameWon = checkGameWon();
+    
+    if(fuel <= 0) gameOver = true;
     // Midterm Code
     lunarModelSys->update();
     lander.setPosition(lunarModelSys->particles[0].position.x, lunarModelSys->particles[0].position.y, lunarModelSys->particles[0].position.z);
@@ -271,6 +273,7 @@ void ofApp::update() {
                             if(insideLA && scoreReturned != 0) {
                                 cout << "Landed in a landing area!" << endl;
                                 gameScore += scoreReturned;
+                                fuel += 50;
                                 cout << "Player score: " << scoreReturned << endl;
                             }
                             else {
@@ -508,6 +511,12 @@ void ofApp::draw(){
     str2 += "Altitide (AGL): " + std::to_string(landerAlt);
     ofSetColor(ofColor::white);
     ofDrawBitmapString(str2, 5, 15);
+    
+    string str3;
+    str3 += "Fuel: " + std::to_string(fuel);
+    ofSetColor(ofColor::white);
+    ofDrawBitmapString(str3, ofGetWindowWidth() - 170, 30);
+    ofSetVerticalSync(true);
 }
 
 // 
@@ -588,6 +597,7 @@ void ofApp::keyPressed(int key) {
             thrustOn = true;
             thrust.play();
         }
+            fuel -= 0.1;
         tForce->set(glm::vec3(0, 1.5, 0));
         break;
     case 's':     // spacefraft thrust DOWN
@@ -597,6 +607,7 @@ void ofApp::keyPressed(int key) {
             thrustOn = true;
             thrust.play();
         }
+            fuel -= 0.1;
         tForce->set(glm::vec3(0, -1.5, 0));
         break;
 	case OF_KEY_ALT:
@@ -614,24 +625,28 @@ void ofApp::keyPressed(int key) {
         headingVector = glm::vec3(0, 0, -5);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
+            fuel -= 0.1;
         tForce->applied = false;
         break;
     case OF_KEY_DOWN:   // move backward
         headingVector = glm::vec3(0, 0, 5);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
+            fuel -= 0.1;
         tForce->applied = false;
         break;
     case OF_KEY_LEFT:   // move left
         headingVector = glm::vec3(-5, 0, 0);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
+            fuel -= 0.1;
         tForce->applied = false;
         break;
     case OF_KEY_RIGHT:   // move right
         headingVector = glm::vec3(5, 0, 0);
         headingVector = glm::rotate(headingVector, glm::radians(lmAngle), glm::vec3(0, 1, 0));
         tForce->set(headingVector);
+            fuel -= 0.1;
         tForce->applied = false;
         break;
 	case OF_KEY_F1:
