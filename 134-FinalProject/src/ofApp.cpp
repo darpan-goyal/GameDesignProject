@@ -34,8 +34,9 @@ void ofApp::setup() {
     // Loading sounds for background and thruster (Darpan)
     bgSound.load("sounds/space.wav");
     thrust.load("sounds/rocket-thrust-01.wav");
-    bgSound.setVolume(0.3);
+    bgSound.setVolume(0.5);
     bgSound.play();
+    bgSound.setLoop(true);
 
     // Setting camears for top-down views and tracing camera (Sivam)
 	top.setNearClip(.1);
@@ -70,10 +71,7 @@ void ofApp::setup() {
 
 	// create KdTree for terrain
 	//
-    float timeBefore = ofGetElapsedTimef();
     octree.create(terrain.getMesh(0), 8);
-    float timeAfter = ofGetElapsedTimef();
-    cout << "Time taken to build tree in MS: " << (timeAfter - timeBefore) << endl;
     
     gui.setup();
     gui.add(drawLevel.setup("Draw Level", 1, 1, 7));
@@ -346,12 +344,11 @@ void ofApp::draw(){
         if (bWireframe) {                    // wireframe mode  (include axis)
             ofDisableLighting();
             ofSetColor(ofColor::slateGray);
-            terrain.drawWireframe();
+            //terrain.drawWireframe();
             if (bLanderLoaded) {
-                lander.drawWireframe();
-                if (!bTerrainSelected) drawAxis(lander.getPosition());
+                //lander.drawWireframe();
+                //if (!bTerrainSelected) drawAxis(lander.getPosition());
             }
-            if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
         }
         else {
             ofEnableLighting();              // shaded mode
@@ -359,7 +356,6 @@ void ofApp::draw(){
             keyLight.draw();
             if (bLanderLoaded) {
                 lander.drawFaces();
-                if (!bTerrainSelected) drawAxis(lander.getPosition());
 
                 ofVec3f min = lander.getSceneMin() + lander.getPosition();
                 ofVec3f max = lander.getSceneMax() + lander.getPosition();
@@ -375,7 +371,6 @@ void ofApp::draw(){
 
                 //drawBox(bounds);
             }
-            if (bTerrainSelected) drawAxis(ofVec3f(0, 0, 0));
         }
 
         if (bDisplayPoints) {
@@ -384,13 +379,6 @@ void ofApp::draw(){
             terrain.drawVertices();
         }
 
-        // highlight selected point (draw sphere around selected point)
-        //
-        if (bPointSelected) {
-            ofSetColor(ofColor::red);
-            ofDrawSphere(selectedPoint, 2.0);
-        }
-        
         // Draw the landing regions
         ofNoFill();
         ofSetColor(0, 230, 0);
@@ -398,7 +386,6 @@ void ofApp::draw(){
             if(landedAreas[i]){
                  ofSetColor(255, 0, 0);
                 ofVec3f where = landAreaCoords[i];
-                //ofVec3f where = lander.getPosition();
                 lights[i].setPosition(where.x + landAreaWidth/2,where.y+40,where.z + landAreaWidth/2);
                 lights[i].enable();
             }
@@ -414,7 +401,7 @@ void ofApp::draw(){
 
         // debug - check first node to make sure bbox is correct
         //
-        octree.draw(octree.root, drawLevel, 0);
+        //octree.draw(octree.root, drawLevel, 0);
         
         explosions->draw();
         theCam->end();
@@ -436,7 +423,6 @@ void ofApp::draw(){
             theCam->begin();
 
             // draw particle emitter here..
-            //emitter.draw();
             particleTex.bind();
             vbo.draw(GL_POINTS, 0, (int)thrustEmitter->sys->particles.size());
             particleTex.unbind();
@@ -490,6 +476,7 @@ void ofApp::draw(){
 
 // Draw an XYZ axis in RGB at world (0,0,0) for reference.
 //
+/*
 void ofApp::drawAxis(ofVec3f location) {
 
 	ofPushMatrix();
@@ -512,6 +499,7 @@ void ofApp::drawAxis(ofVec3f location) {
 
 	ofPopMatrix();
 }
+ */
 
 
 void ofApp::keyPressed(int key) {

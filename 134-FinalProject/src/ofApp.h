@@ -28,7 +28,7 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
-		void drawAxis(ofVec3f);
+		//void drawAxis(ofVec3f);
 		void initLightingAndMaterials();
 		void savePicture();
 		void toggleWireframeMode();
